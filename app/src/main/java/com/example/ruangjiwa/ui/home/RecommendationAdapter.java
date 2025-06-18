@@ -50,6 +50,12 @@ public class RecommendationAdapter extends RecyclerView.Adapter<RecommendationAd
         return recommendationList.size();
     }
 
+    public void updateData(List<Recommendation> newRecommendations) {
+        this.recommendationList.clear();
+        this.recommendationList.addAll(newRecommendations);
+        notifyDataSetChanged();
+    }
+
     class RecommendationViewHolder extends RecyclerView.ViewHolder {
         private final ImageView ivThumbnail;
         private final TextView tvType;

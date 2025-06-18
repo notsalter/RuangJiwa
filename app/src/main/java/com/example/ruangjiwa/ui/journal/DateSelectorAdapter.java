@@ -6,7 +6,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ruangjiwa.R;
@@ -83,7 +82,7 @@ public class DateSelectorAdapter extends RecyclerView.Adapter<DateSelectorAdapte
     class DateViewHolder extends RecyclerView.ViewHolder {
         private final TextView tvDayOfWeek;
         private final TextView tvDayOfMonth;
-        private final CardView cardDate;
+        private final View cardDate; // Changed from CardView to View to avoid ClassCastException
 
         public DateViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -123,11 +122,11 @@ public class DateSelectorAdapter extends RecyclerView.Adapter<DateSelectorAdapte
 
             // Apply correct styling
             if (isSelected) {
-                cardDate.setCardBackgroundColor(itemView.getContext().getColor(R.color.primary));
+                cardDate.setBackgroundColor(itemView.getContext().getColor(R.color.primary));
                 tvDayOfWeek.setTextColor(itemView.getContext().getColor(R.color.white));
                 tvDayOfMonth.setTextColor(itemView.getContext().getColor(R.color.white));
             } else {
-                cardDate.setCardBackgroundColor(itemView.getContext().getColor(R.color.white));
+                cardDate.setBackgroundColor(itemView.getContext().getColor(R.color.white));
                 tvDayOfWeek.setTextColor(itemView.getContext().getColor(R.color.gray_400));
                 tvDayOfMonth.setTextColor(itemView.getContext().getColor(R.color.gray_700));
             }

@@ -62,30 +62,63 @@ public class MoodFragment extends Fragment {
 
         try {
             // Initialize chart manager (place in try/catch to prevent crashes)
-            chartManager = new ChartManager(binding.moodChart);
+            if (binding != null && binding.moodChart != null) {
+                chartManager = new ChartManager(binding.moodChart);
 
-            // Initialize calendar view
-            setupCalendarView();
+                // Only proceed with chart-dependent setup if chart was initialized successfully
+                if (chartManager.isInitialized()) {
+                    // Initialize calendar view
+                    setupCalendarView();
 
-            // Set up mood insights
-            setupMoodInsights();
+                    // Set up mood insights
+                    setupMoodInsights();
 
-            // Load mood data (with mock data)
-            loadMoodData();
+                    // Load mood data (with mock data)
+                    loadMoodData();
 
-            // Set up mood statistics
-            setupMoodStats();
+                    // Set up mood statistics
+                    setupMoodStats();
 
-            // Set up time period selection
-            setupTimePeriodSelection();
+                    // Set up time period selection
+                    setupTimePeriodSelection();
 
-            // Set up calendar button
-            binding.btnCalendar.setOnClickListener(v -> toggleCalendarView());
+                    // Set up calendar button
+                    binding.btnCalendar.setOnClickListener(v -> toggleCalendarView());
+                } else {
+                    // Chart initialization failed, show a message and hide chart-related UI
+                    Toast.makeText(requireContext(),
+                            "Chart initialization failed. Some features may be limited.",
+                            Toast.LENGTH_SHORT).show();
+
+                    if (binding.moodChart != null) {
+                        binding.moodChart.setVisibility(View.GONE);
+                    }
+
+                    // Still set up non-chart UI elements
+                    setupMoodInsights();
+                    setupMoodStats();
+                    loadMoodData(); // Still load data for the history list
+                }
+            } else {
+                Toast.makeText(requireContext(),
+                        "Chart view not found. Some features may be limited.",
+                        Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(requireContext(),
-                    "Error setting up mood tracking. Please try again later: " + e.getMessage(),
+                    "Error setting up mood tracking. Some features may be limited.",
                     Toast.LENGTH_SHORT).show();
+
+            // Hide chart UI if there was an error
+            if (binding != null && binding.moodChart != null) {
+                binding.moodChart.setVisibility(View.GONE);
+            }
+
+            // Still set up non-chart UI elements
+            setupMoodInsights();
+            setupMoodStats();
+            loadMoodData(); // Still load data for the history list
         }
     }
 

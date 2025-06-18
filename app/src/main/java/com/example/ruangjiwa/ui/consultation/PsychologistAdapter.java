@@ -78,31 +78,46 @@ public class PsychologistAdapter extends RecyclerView.Adapter<PsychologistAdapte
         }
 
         public void bind(final Psychologist psychologist) {
-            tvName.setText(psychologist.getName());
-            tvSpecialty.setText(psychologist.getSpecialty());
+            if (psychologist == null) return;
 
-            String experience = psychologist.getYearsExperience() + " tahun pengalaman";
-            tvExperience.setText(experience);
+            if (tvName != null) {
+                tvName.setText(psychologist.getName());
+            }
 
-            String rating = String.format("%.1f", psychologist.getRating());
-            tvRating.setText(rating);
+            if (tvSpecialty != null) {
+                tvSpecialty.setText(psychologist.getSpecialty());
+            }
+
+            if (tvExperience != null) {
+                String experience = psychologist.getYearsExperience() + " tahun pengalaman";
+                tvExperience.setText(experience);
+            }
+
+            if (tvRating != null) {
+                String rating = String.format("%.1f", psychologist.getRating());
+                tvRating.setText(rating);
+            }
 
             // Set availability text and style
-            if (psychologist.isAvailableToday()) {
-                tvAvailability.setText(R.string.available_today);
-                tvAvailability.setTextColor(itemView.getContext().getColor(R.color.green_500));
-            } else {
-                tvAvailability.setText(R.string.available_tomorrow);
-                tvAvailability.setTextColor(itemView.getContext().getColor(R.color.gray_500));
+            if (tvAvailability != null) {
+                if (psychologist.isAvailableToday()) {
+                    tvAvailability.setText(R.string.available_today);
+                    tvAvailability.setTextColor(itemView.getContext().getColor(R.color.green_500));
+                } else {
+                    tvAvailability.setText(R.string.available_tomorrow);
+                    tvAvailability.setTextColor(itemView.getContext().getColor(R.color.gray_500));
+                }
             }
 
             // Load psychologist image
-            Glide.with(itemView.getContext())
+            if (ivPsychologist != null) {
+                Glide.with(itemView.getContext())
                     .load(psychologist.getImageUrl())
                     .apply(RequestOptions.centerCropTransform())
                     .placeholder(R.drawable.ic_profile)
                     .error(R.drawable.ic_profile)
                     .into(ivPsychologist);
+            }
 
             // Setup specialization chips
             chipGroupSpecializations.removeAllViews();

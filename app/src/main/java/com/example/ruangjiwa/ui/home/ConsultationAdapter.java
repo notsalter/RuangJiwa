@@ -53,6 +53,12 @@ public class ConsultationAdapter extends RecyclerView.Adapter<ConsultationAdapte
         return consultationList.size();
     }
 
+    public void updateData(List<Consultation> newConsultations) {
+        this.consultationList.clear();
+        this.consultationList.addAll(newConsultations);
+        notifyDataSetChanged();
+    }
+
     public class ConsultationViewHolder extends RecyclerView.ViewHolder {
         private final ImageView imgPsychologist;
         private final TextView tvPsychologistName;

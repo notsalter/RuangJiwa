@@ -77,35 +77,48 @@ public class MoodHistoryAdapter extends RecyclerView.Adapter<MoodHistoryAdapter.
         }
 
         public void bind(MoodEntry entry) {
+            if (entry == null) return;
+
             // Set mood icon and text
-            ivMoodIcon.setImageResource(entry.getMood().getIconResource());
-            ivMoodIcon.setColorFilter(itemView.getContext().getColor(entry.getMood().getColorResource()));
-            tvMood.setText(entry.getMood().getDisplayName());
+            if (ivMoodIcon != null) {
+                ivMoodIcon.setImageResource(entry.getMood().getIconResource());
+                ivMoodIcon.setColorFilter(itemView.getContext().getColor(entry.getMood().getColorResource()));
+            }
+
+            if (tvMood != null) {
+                tvMood.setText(entry.getMood().getDisplayName());
+            }
 
             // Format and set date/time
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy, HH:mm", new Locale("id", "ID"));
-            tvDateTime.setText(dateFormat.format(entry.getDate()));
+            if (tvDateTime != null) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMMM yyyy, HH:mm", new Locale("id", "ID"));
+                tvDateTime.setText(dateFormat.format(entry.getDate()));
+            }
 
             // Set notes (if any)
-            if (entry.getNotes() != null && !entry.getNotes().isEmpty()) {
-                tvNotes.setVisibility(View.VISIBLE);
-                tvNotes.setText(entry.getNotes());
-            } else {
-                tvNotes.setVisibility(View.GONE);
+            if (tvNotes != null) {
+                if (entry.getNotes() != null && !entry.getNotes().isEmpty()) {
+                    tvNotes.setVisibility(View.VISIBLE);
+                    tvNotes.setText(entry.getNotes());
+                } else {
+                    tvNotes.setVisibility(View.GONE);
+                }
             }
 
             // Add tags (if any)
-            chipGroupTags.removeAllViews();
-            if (entry.getTags() != null && entry.getTags().length > 0) {
-                chipGroupTags.setVisibility(View.VISIBLE);
-                for (String tag : entry.getTags()) {
-                    Chip chip = (Chip) LayoutInflater.from(itemView.getContext())
-                            .inflate(R.layout.item_tag_chip, chipGroupTags, false);
-                    chip.setText(tag);
-                    chipGroupTags.addView(chip);
+            if (chipGroupTags != null) {
+                chipGroupTags.removeAllViews();
+                if (entry.getTags() != null && entry.getTags().length > 0) {
+                    chipGroupTags.setVisibility(View.VISIBLE);
+                    for (String tag : entry.getTags()) {
+                        Chip chip = (Chip) LayoutInflater.from(itemView.getContext())
+                                .inflate(R.layout.item_tag_chip, chipGroupTags, false);
+                        chip.setText(tag);
+                        chipGroupTags.addView(chip);
+                    }
+                } else {
+                    chipGroupTags.setVisibility(View.GONE);
                 }
-            } else {
-                chipGroupTags.setVisibility(View.GONE);
             }
         }
     }

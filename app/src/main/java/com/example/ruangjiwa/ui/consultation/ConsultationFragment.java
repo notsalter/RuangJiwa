@@ -37,23 +37,35 @@ public class ConsultationFragment extends Fragment implements PsychologistAdapte
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
+        try {
+            // Initialize Firestore with error handling
+            db = FirebaseFirestore.getInstance();
 
-        // Initialize psychologist list and adapter
-        psychologistList = new ArrayList<>();
-        adapter = new PsychologistAdapter(psychologistList, this);
-        binding.rvPsychologists.setAdapter(adapter);
-        binding.rvPsychologists.setLayoutManager(new LinearLayoutManager(requireContext()));
+            // Initialize psychologist list and adapter
+            psychologistList = new ArrayList<>();
+            adapter = new PsychologistAdapter(psychologistList, this);
+            binding.rvPsychologists.setAdapter(adapter);
+            binding.rvPsychologists.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        // Set up filters
-        setupFilters();
+            // Set up filters
+            setupFilters();
 
-        // Load psychologists
-        loadPsychologists();
+            // Load psychologists
+            loadPsychologists();
 
-        // Set up search functionality
-        setupSearch();
+            // Set up search functionality
+            setupSearch();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (getContext() != null) {
+                Toast.makeText(getContext(),
+                    "Error initializing consultation. Some features may be limited.",
+                    Toast.LENGTH_SHORT).show();
+            }
+            // Create empty list if initialization failed
+            psychologistList = new ArrayList<>();
+        }
     }
 
     private void setupFilters() {
@@ -76,52 +88,89 @@ public class ConsultationFragment extends Fragment implements PsychologistAdapte
     }
 
     private void loadPsychologists() {
-        // Show loading indicator
-        binding.progressBar.setVisibility(View.VISIBLE);
+        try {
+            // Show loading indicator
+            if (binding != null && binding.progressBar != null) {
+                binding.progressBar.setVisibility(View.VISIBLE);
+            }
 
-        // In a real app, this would be fetched from Firestore
-        // For now, we'll use sample data
-        psychologistList.clear();
+            // In a real app, this would be fetched from Firestore
+            // For now, we'll use sample data
+            psychologistList.clear();
 
-        psychologistList.add(new Psychologist(
-                "1",
-                "Dr. Ratna Dewi, M.Psi",
-                "Psikolog Klinis",
-                8, // years of experience
-                4.9, // rating
-                253, // number of reviews
-                new String[]{"Depresi", "Kecemasan", "Relationship"},
-                "https://example.com/images/psychologist1.jpg",
-                true // available today
-        ));
+            psychologistList.add(new Psychologist(
+                    "1",
+                    "Dr. Ratna Dewi, M.Psi",
+                    "Psikolog Klinis",
+                    8, // years of experience
+                    4.9, // rating
+                    253, // number of reviews
+                    new String[]{"Depresi", "Kecemasan", "Relationship"},
+                    "https://example.com/images/psychologist1.jpg",
+                    true // available today
+            ));
 
-        psychologistList.add(new Psychologist(
-                "2",
-                "Dr. Budi Santoso, M.Psi",
-                "Psikolog Klinis",
-                12,
-                4.8,
-                187,
-                new String[]{"Trauma", "Kecemasan", "Stress"},
-                "https://example.com/images/psychologist2.jpg",
-                false // not available today
-        ));
+            psychologistList.add(new Psychologist(
+                    "2",
+                    "Dr. Budi Santoso, M.Psi",
+                    "Psikolog Klinis",
+                    12,
+                    4.8,
+                    187,
+                    new String[]{"Trauma", "Kecemasan", "Stress"},
+                    "https://example.com/images/psychologist2.jpg",
+                    false // not available today
+            ));
 
-        psychologistList.add(new Psychologist(
-                "3",
-                "Dr. Maya Kusuma, M.Psi",
-                "Psikolog Klinis",
-                6,
-                4.7,
-                156,
-                new String[]{"Relationship", "Depresi", "Self-esteem"},
-                "https://example.com/images/psychologist3.jpg",
-                true // available today
-        ));
+            psychologistList.add(new Psychologist(
+                    "3",
+                    "Dr. Maya Kusuma, M.Psi",
+                    "Psikolog Klinis",
+                    6,
+                    4.7,
+                    156,
+                    new String[]{"Relationship", "Depresi", "Self-esteem"},
+                    "https://example.com/images/psychologist3.jpg",
+                    true // available today
+            ));
 
-        // Hide loading indicator and update adapter
-        binding.progressBar.setVisibility(View.GONE);
-        adapter.notifyDataSetChanged();
+            // Update the adapter and hide loading indicator
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+
+            if (binding != null && binding.progressBar != null) {
+                binding.progressBar.setVisibility(View.GONE);
+            }
+
+            // Show empty state if no psychologists
+            updateEmptyState();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (getContext() != null) {
+                Toast.makeText(getContext(),
+                    "Error loading psychologists: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+            }
+
+            // Hide loading indicator
+            if (binding != null && binding.progressBar != null) {
+                binding.progressBar.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void updateEmptyState() {
+        // Check if we have psychologists to show
+        if (binding != null && psychologistList.isEmpty()) {
+            // We don't have an emptyState view, so we'll just show a toast
+            if (getContext() != null) {
+                Toast.makeText(getContext(),
+                    "Tidak ada psikolog yang tersedia saat ini",
+                    Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void filterPsychologists(String filter) {
@@ -159,5 +208,6 @@ public class ConsultationFragment extends Fragment implements PsychologistAdapte
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        adapter = null;
     }
 }

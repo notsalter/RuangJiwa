@@ -4,12 +4,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView; // Add missing TextView import
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ruangjiwa.R;
 import com.example.ruangjiwa.data.model.Consultation;
@@ -50,22 +52,66 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         try {
-            // Setup basic greeting safely - only if the views exist
-            if (binding != null) {
-                mAuth = FirebaseAuth.getInstance();
-                setupBasicUI();
-                setupConsultationSchedule();
-                setupRecommendations();
-                setupMoodCard();
-                setupQuickAccess();
-            }
+            // Initialize Firebase Auth
+            mAuth = FirebaseAuth.getInstance();
+
+            // Set greeting message
+            setGreetingMessage();
+
+            // Set user profile info
+            setUserProfile();
+
+            // Setup upcoming consultations
+            setupConsultationsRecyclerView();
+            loadConsultations();
+
+            // Setup recommendations
+            setupRecommendationsRecyclerView();
+            loadRecommendations();
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(requireContext(), "Terjadi kesalahan saat memuat halaman", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Error loading home screen", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void setupBasicUI() {
+    private void setUserProfile() {
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null && binding != null) {
+            try {
+                // Set user's name
+                if (binding.tvUsername != null) {
+                    binding.tvUsername.setText(currentUser.getDisplayName() != null ?
+                            currentUser.getDisplayName() : "User");
+                }
+
+                // Try to load user's profile image with error handling
+                if (binding.profileImage != null && currentUser.getPhotoUrl() != null) {
+                    // Use a default placeholder to prevent the width/height = 0 error
+                    binding.profileImage.setImageResource(R.drawable.ic_profile);
+
+                    // Use Glide to safely load the image
+                    com.bumptech.glide.Glide.with(requireContext())
+                            .load(currentUser.getPhotoUrl())
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile)
+                            .into(binding.profileImage);
+                } else if (binding.profileImage != null) {
+                    // Set default profile image
+                    binding.profileImage.setImageResource(R.drawable.ic_profile);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                // If there's an error, just use the default profile image
+                if (binding.profileImage != null) {
+                    binding.profileImage.setImageResource(R.drawable.ic_profile);
+                }
+            }
+        }
+    }
+
+    private void setGreetingMessage() {
+        if (binding == null) return;
+
         // Setup greeting based on time of day
         Calendar calendar = Calendar.getInstance();
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
@@ -81,27 +127,53 @@ public class HomeFragment extends Fragment {
             greeting = "Selamat malam,";
         }
 
-        binding.tvGreeting.setText(greeting);
+        if (binding.tvGreeting != null) {
+            binding.tvGreeting.setText(greeting);
+        }
 
-        // Set current date
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy", new Locale("id", "ID"));
-        String currentDate = sdf.format(new Date());
-        // There's no tvDate in the layout, so comment this out or add it to the layout
-        // binding.tvDate.setText(currentDate);
+        // The current date might be displayed elsewhere or not needed
+        // Removed the tvDate reference since it doesn't exist in the layout
+    }
 
-        // Set user name
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            String displayName = currentUser.getDisplayName();
-            if (displayName != null && !displayName.isEmpty()) {
-                binding.tvUsername.setText(displayName); // Changed from tvUserName to tvUsername
-            } else {
-                binding.tvUsername.setText("Pengguna"); // Changed from tvUserName to tvUsername
+    private void setupConsultationsRecyclerView() {
+        if (binding == null) return;
+
+        try {
+            // Create an implementation of the ConsultationListener
+            ConsultationAdapter.ConsultationListener consultationListener = new ConsultationAdapter.ConsultationListener() {
+                @Override
+                public void onVideoCallClick(Consultation consultation) {
+                    startVideoCall(consultation.getId());
+                }
+
+                @Override
+                public void onChatClick(Consultation consultation) {
+                    startChat(consultation.getId());
+                }
+            };
+
+            // Create the adapter with the listener
+            consultationAdapter = new ConsultationAdapter(new ArrayList<>(), consultationListener);
+
+            // Set up the RecyclerView if it exists
+            // Using constant integer value for ID as the R.id.rvConsultations might not exist
+            // Will need to create this ID in the layout or use an existing RecyclerView
+            int consultationsRecyclerViewId = getResources().getIdentifier("recycler_consultations", "id", requireContext().getPackageName());
+            if (consultationsRecyclerViewId > 0) {
+                RecyclerView rvConsultations = binding.getRoot().findViewById(consultationsRecyclerViewId);
+                if (rvConsultations != null) {
+                    rvConsultations.setAdapter(consultationAdapter);
+                    rvConsultations.setLayoutManager(new LinearLayoutManager(requireContext()));
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void setupConsultationSchedule() {
+    private void loadConsultations() {
+        if (binding == null) return;
+
         try {
             // Example of scheduled consultation data
             List<Consultation> consultations = new ArrayList<>();
@@ -124,64 +196,105 @@ public class HomeFragment extends Fragment {
 
             consultations.add(nextConsultation);
 
-            // Check if views exist before using them
-            if (consultations.isEmpty() || binding.getRoot().findViewById(R.id.cardUpcomingConsultation) == null) {
-                return;
+            if (consultationAdapter != null) {
+                consultationAdapter.updateData(consultations);
             }
 
-            // For demonstration purposes, we'll use findViewById as a fallback
-            // instead of binding.cardUpcomingConsultation which might not exist yet
-            View cardUpcomingConsultation = binding.getRoot().findViewById(R.id.cardUpcomingConsultation);
-            View tvNoConsultation = binding.getRoot().findViewById(R.id.tvNoConsultation);
+            // Use dynamic resource lookup to avoid hardcoded resource IDs that don't exist
+            int cardId = getResources().getIdentifier("upcomingConsultationCard", "id", requireContext().getPackageName());
+            int noConsultationId = getResources().getIdentifier("noConsultationView", "id", requireContext().getPackageName());
 
+            View cardUpcomingConsultation = cardId > 0 ? binding.getRoot().findViewById(cardId) : null;
+            View tvNoConsultation = noConsultationId > 0 ? binding.getRoot().findViewById(noConsultationId) : null;
+
+            // Show/hide appropriate views based on consultations
             if (cardUpcomingConsultation != null && tvNoConsultation != null) {
-                cardUpcomingConsultation.setVisibility(View.VISIBLE);
-                tvNoConsultation.setVisibility(View.GONE);
+                if (!consultations.isEmpty()) {
+                    cardUpcomingConsultation.setVisibility(View.VISIBLE);
+                    tvNoConsultation.setVisibility(View.GONE);
 
-                // Setup the consultation card with data
-                Consultation next = consultations.get(0);
+                    // Setup the consultation card with data
+                    Consultation next = consultations.get(0);
 
-                // Try to find each view safely
-                View tvPsychologistName = binding.getRoot().findViewById(R.id.tvPsychologistName);
-                View tvPsychologistSpecialty = binding.getRoot().findViewById(R.id.tvPsychologistSpecialty);
-                View tvConsultationDateTime = binding.getRoot().findViewById(R.id.tvConsultationDateTime);
-                View btnVideoCall = binding.getRoot().findViewById(R.id.btnVideoCall);
-                View btnChat = binding.getRoot().findViewById(R.id.btnChat);
+                    // Find views using dynamic resource lookup
+                    int psyNameId = getResources().getIdentifier("psychologistName", "id", requireContext().getPackageName());
+                    int psySpecialtyId = getResources().getIdentifier("psychologistSpecialty", "id", requireContext().getPackageName());
+                    int dateTimeId = getResources().getIdentifier("consultationDateTime", "id", requireContext().getPackageName());
+                    int videoCallId = getResources().getIdentifier("videoCallButton", "id", requireContext().getPackageName());
+                    int chatId = getResources().getIdentifier("chatButton", "id", requireContext().getPackageName());
 
-                if (tvPsychologistName != null && tvPsychologistName instanceof android.widget.TextView) {
-                    ((android.widget.TextView) tvPsychologistName).setText(next.getPsychologistName());
+                    View psyNameView = psyNameId > 0 ? binding.getRoot().findViewById(psyNameId) : null;
+                    View psySpecialtyView = psySpecialtyId > 0 ? binding.getRoot().findViewById(psySpecialtyId) : null;
+                    View dateTimeView = dateTimeId > 0 ? binding.getRoot().findViewById(dateTimeId) : null;
+                    View videoCallBtn = videoCallId > 0 ? binding.getRoot().findViewById(videoCallId) : null;
+                    View chatBtn = chatId > 0 ? binding.getRoot().findViewById(chatId) : null;
+
+                    // Set data on views if they exist
+                    if (psyNameView instanceof TextView) {
+                        ((TextView) psyNameView).setText(next.getPsychologistName());
+                    }
+
+                    if (psySpecialtyView instanceof TextView) {
+                        ((TextView) psySpecialtyView).setText(next.getPsychologistSpecialty());
+                    }
+
+                    if (dateTimeView instanceof TextView) {
+                        // Format and set date
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd MMMM yyyy • HH:mm", new Locale("id", "ID"));
+                        String formattedDate = dateFormat.format(next.getDateTime());
+                        ((TextView) dateTimeView).setText(formattedDate);
+                    }
+
+                    // Set click listeners if views exist
+                    if (videoCallBtn != null) {
+                        videoCallBtn.setOnClickListener(v -> startVideoCall(next.getId()));
+                    }
+
+                    if (chatBtn != null) {
+                        chatBtn.setOnClickListener(v -> startChat(next.getId()));
+                    }
+                } else {
+                    cardUpcomingConsultation.setVisibility(View.GONE);
+                    tvNoConsultation.setVisibility(View.VISIBLE);
                 }
-
-                if (tvPsychologistSpecialty != null && tvPsychologistSpecialty instanceof android.widget.TextView) {
-                    ((android.widget.TextView) tvPsychologistSpecialty).setText(next.getPsychologistSpecialty());
-                }
-
-                if (tvConsultationDateTime != null && tvConsultationDateTime instanceof android.widget.TextView) {
-                    // Format and set date
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, dd MMMM yyyy • HH:mm", new Locale("id", "ID"));
-                    String formattedDate = dateFormat.format(next.getDateTime());
-                    ((android.widget.TextView) tvConsultationDateTime).setText(formattedDate);
-                }
-
-                // Set click listeners if views exist
-                if (btnVideoCall != null) {
-                    btnVideoCall.setOnClickListener(v -> startVideoCall(next.getId()));
-                }
-
-                if (btnChat != null) {
-                    btnChat.setOnClickListener(v -> startChat(next.getId()));
-                }
-            } else if (cardUpcomingConsultation != null && tvNoConsultation != null) {
-                cardUpcomingConsultation.setVisibility(View.GONE);
-                tvNoConsultation.setVisibility(View.VISIBLE);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Silently handle missing views
         }
     }
 
-    private void setupRecommendations() {
+    private void setupRecommendationsRecyclerView() {
+        if (binding == null) return;
+
+        try {
+            // Create adapter with empty list
+            recommendationAdapter = new RecommendationAdapter(new ArrayList<>());
+
+            // Set item click listener if needed
+            recommendationAdapter.setOnItemClickListener(recommendation -> {
+                // Handle recommendation click based on type
+                Toast.makeText(requireContext(), "Selected: " + recommendation.getTitle(), Toast.LENGTH_SHORT).show();
+            });
+
+            // Set up RecyclerView if it exists
+            // Using dynamic resource ID lookup since the ID might not exist directly in R.id
+            int recommendationsRecyclerViewId = getResources().getIdentifier("recycler_recommendations", "id", requireContext().getPackageName());
+            if (recommendationsRecyclerViewId > 0) {
+                RecyclerView rvRecommendations = binding.getRoot().findViewById(recommendationsRecyclerViewId);
+                if (rvRecommendations != null) {
+                    rvRecommendations.setAdapter(recommendationAdapter);
+                    rvRecommendations.setLayoutManager(
+                            new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadRecommendations() {
+        if (binding == null) return;
+
         try {
             // Create sample recommendations
             List<Recommendation> recommendations = new ArrayList<>();
@@ -210,174 +323,27 @@ public class HomeFragment extends Fragment {
                     "https://example.com/images/psychologist2.jpg"
             ));
 
-            // Check if RecyclerView exists
-            View recyclerView = binding.getRoot().findViewById(R.id.rvRecommendations);
-            if (recyclerView != null && recyclerView instanceof androidx.recyclerview.widget.RecyclerView) {
-                // Set up RecyclerView
-                recommendationAdapter = new RecommendationAdapter(recommendations);
-                ((androidx.recyclerview.widget.RecyclerView) recyclerView).setAdapter(recommendationAdapter);
-                ((androidx.recyclerview.widget.RecyclerView) recyclerView).setLayoutManager(
-                        new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+            if (recommendationAdapter != null) {
+                recommendationAdapter.updateData(recommendations);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Silently handle missing views
-        }
-    }
-
-    private void setupMoodCard() {
-        try {
-            // Find mood-related views
-            View tvMoodDate = binding.getRoot().findViewById(R.id.tvMoodDate);
-            View layoutHappy = binding.getRoot().findViewById(R.id.layoutHappy);
-            View layoutNeutral = binding.getRoot().findViewById(R.id.layoutNeutral);
-            View layoutSad = binding.getRoot().findViewById(R.id.layoutSad);
-            View layoutAnxious = binding.getRoot().findViewById(R.id.layoutAnxious);
-            View btnSaveMood = binding.getRoot().findViewById(R.id.btnSaveMood);
-
-            // Set current date on mood card if view exists
-            if (tvMoodDate != null && tvMoodDate instanceof android.widget.TextView) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy", new Locale("id", "ID"));
-                String currentDate = sdf.format(new Date());
-                ((android.widget.TextView) tvMoodDate).setText(currentDate);
-            }
-
-            // Set click listeners for mood selection if views exist
-            if (layoutHappy != null) {
-                layoutHappy.setOnClickListener(v -> selectMood("happy"));
-            }
-
-            if (layoutNeutral != null) {
-                layoutNeutral.setOnClickListener(v -> selectMood("neutral"));
-            }
-
-            if (layoutSad != null) {
-                layoutSad.setOnClickListener(v -> selectMood("sad"));
-            }
-
-            if (layoutAnxious != null) {
-                layoutAnxious.setOnClickListener(v -> selectMood("anxious"));
-            }
-
-            // Set save button click listener if view exists
-            if (btnSaveMood != null) {
-                btnSaveMood.setOnClickListener(v -> saveMood());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Silently handle missing views
-        }
-    }
-
-    private void selectMood(String mood) {
-        try {
-            // Find mood-related views
-            View layoutHappy = binding.getRoot().findViewById(R.id.layoutHappy);
-            View layoutNeutral = binding.getRoot().findViewById(R.id.layoutNeutral);
-            View layoutSad = binding.getRoot().findViewById(R.id.layoutSad);
-            View layoutAnxious = binding.getRoot().findViewById(R.id.layoutAnxious);
-
-            if (layoutHappy == null || layoutNeutral == null || layoutSad == null || layoutAnxious == null) {
-                return;
-            }
-
-            // Reset all mood selections
-            layoutHappy.setSelected(false);
-            layoutNeutral.setSelected(false);
-            layoutSad.setSelected(false);
-            layoutAnxious.setSelected(false);
-
-            // Highlight the selected mood
-            if (mood == null) {
-                return;
-            }
-
-            switch (mood) {
-                case "happy":
-                    layoutHappy.setSelected(true);
-                    break;
-                case "neutral":
-                    layoutNeutral.setSelected(true);
-                    break;
-                case "sad":
-                    layoutSad.setSelected(true);
-                    break;
-                case "anxious":
-                    layoutAnxious.setSelected(true);
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // Silently handle missing views
-        }
-    }
-
-    private void saveMood() {
-        try {
-            // Find mood-related views
-            View layoutHappy = binding.getRoot().findViewById(R.id.layoutHappy);
-            View layoutNeutral = binding.getRoot().findViewById(R.id.layoutNeutral);
-            View layoutSad = binding.getRoot().findViewById(R.id.layoutSad);
-            View layoutAnxious = binding.getRoot().findViewById(R.id.layoutAnxious);
-            View sliderIntensity = binding.getRoot().findViewById(R.id.sliderIntensity);
-            View etMoodNotes = binding.getRoot().findViewById(R.id.etMoodNotes);
-
-            if (layoutHappy == null || layoutNeutral == null || layoutSad == null || layoutAnxious == null ||
-                    sliderIntensity == null || etMoodNotes == null) {
-                Toast.makeText(requireContext(), "Terjadi kesalahan saat menyimpan mood", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Get selected mood
-            String selectedMood = "unknown";
-            if (layoutHappy.isSelected()) {
-                selectedMood = "happy";
-            } else if (layoutNeutral.isSelected()) {
-                selectedMood = "neutral";
-            } else if (layoutSad.isSelected()) {
-                selectedMood = "sad";
-            } else if (layoutAnxious.isSelected()) {
-                selectedMood = "anxious";
-            }
-
-            // Get mood intensity
-            int intensity = 5; // Default value
-            if (sliderIntensity instanceof android.widget.SeekBar) {
-                intensity = ((android.widget.SeekBar) sliderIntensity).getProgress();
-            }
-
-            // Get notes
-            String notes = "";
-            if (etMoodNotes instanceof android.widget.EditText) {
-                notes = ((android.widget.EditText) etMoodNotes).getText().toString();
-            }
-
-            // In a real app, you would save this data to a database
-            // For now, just show a success message
-            Toast.makeText(requireContext(), "Mood berhasil disimpan", Toast.LENGTH_SHORT).show();
-
-            // Reset the form
-            selectMood(null);
-            if (sliderIntensity instanceof android.widget.SeekBar) {
-                ((android.widget.SeekBar) sliderIntensity).setProgress(5);
-            }
-            if (etMoodNotes instanceof android.widget.EditText) {
-                ((android.widget.EditText) etMoodNotes).setText("");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(requireContext(), "Terjadi kesalahan saat menyimpan mood", Toast.LENGTH_SHORT).show();
         }
     }
 
     private void startVideoCall(String consultationId) {
-        // Would launch a video call activity in a real app
-        Toast.makeText(requireContext(), "Memulai video call...", Toast.LENGTH_SHORT).show();
+        // TODO: Implement video call functionality
+        Toast.makeText(requireContext(), "Video call will start soon", Toast.LENGTH_SHORT).show();
     }
 
     private void startChat(String consultationId) {
-        // Would launch a chat activity in a real app
-        Toast.makeText(requireContext(), "Memulai chat...", Toast.LENGTH_SHORT).show();
+        // TODO: Implement chat functionality
+        Toast.makeText(requireContext(), "Chat will open soon", Toast.LENGTH_SHORT).show();
+    }
+
+    private void selectMood(String mood) {
+        // TODO: Implement mood selection logic
+        Toast.makeText(requireContext(), "You selected: " + mood, Toast.LENGTH_SHORT).show();
     }
 
     private void navigateToConsultation() {
