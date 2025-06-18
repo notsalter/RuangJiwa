@@ -1,0 +1,118 @@
+<resources>
+    <string name="app_name">RuangJiwa</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_consultation">Konsultasi</string>
+    <string name="nav_journal">Journal</string>
+    <string name="nav_mood">Mood</string>
+    <string name="nav_profile">Profil</string>
+    
+    <!-- Greetings -->
+    <string name="greeting_morning">Selamat pagi,</string>
+    <string name="greeting_afternoon">Selamat siang,</string>
+    <string name="greeting_evening">Selamat sore,</string>
+    <string name="greeting_night">Selamat malam,</string>
+    
+    <!-- Mood -->
+    <string name="mood_question">Bagaimana perasaanmu hari ini?</string>
+    <string name="mood_happy">Senang</string>
+    <string name="mood_normal">Netral</string>
+    <string name="mood_sad">Sedih</string>
+    <string name="mood_anxious">Cemas</string>
+    <string name="mood_excited">Excited</string>
+    <string name="mood_intensity">Intensitas</string>
+    <string name="mood_light">Ringan</string>
+    <string name="mood_heavy">Berat</string>
+    <string name="mood_note">Catatan singkat</string>
+    <string name="mood_note_hint">Apa yang membuatmu merasa seperti ini?</string>
+    <string name="mood_save">Simpan Mood</string>
+    
+    <!-- Home -->
+    <string name="search_hint">Cari psikolog, jurnal, atau audio...</string>
+    <string name="scheduled_consultation">Konsultasi Terjadwal</string>
+    <string name="recommendations">Rekomendasi untukmu</string>
+    <string name="quick_access">Akses Cepat</string>
+    <string name="mood_chart">Perkembangan Mood</string>
+    <string name="see_all">Lihat Semua</string>
+    <string name="see_detail">Detail</string>
+    <string name="video_call">Video Call</string>
+    <string name="chat">Chat</string>
+
+    <!-- Consultation -->
+    <string name="search_psychologist">Cari psikolog berdasarkan nama atau spesialisasi...</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_depression">Depresi</string>
+    <string name="filter_anxiety">Kecemasan</string>
+    <string name="filter_relationship">Relationship</string>
+    <string name="filter_trauma">Trauma</string>
+    <string name="schedule">Jadwalkan</string>
+    <string name="experience_years">tahun pengalaman</string>
+    <string name="available_today">Tersedia hari ini</string>
+    <string name="available_tomorrow">Tersedia besok</string>
+    <string name="confirm_appointment">Konfirmasi Jadwal</string>
+    <string name="select_date">Pilih Tanggal</string>
+    <string name="select_time">Pilih Waktu</string>
+    <string name="today">Hari Ini</string>
+    <string name="tomorrow">Besok</string>
+    <string name="day_after_tomorrow">Lusa</string>
+
+    <!-- Journal -->
+    <string name="journal_title">Journal</string>
+    <string name="journal_description">Tulis perasaan dan pikiranmu hari ini</string>
+    <string name="journal_prompt">Prompt Hari Ini</string>
+    <string name="journal_placeholder">Mulai menulis...</string>
+    <string name="journal_save">Simpan</string>
+    <string name="journal_character_count">0/500 karakter</string>
+    <string name="journal_previous_entries">Catatan Sebelumnya</string>
+    <string name="journal_edit">Edit</string>
+    <string name="journal_delete">Hapus</string>
+    <string name="journal_close">Tutup</string>
+    <string name="journal_private">Catatan Pribadi</string>
+
+    <!-- Mood Tracker -->
+    <string name="mood_tracker_title">Mood Tracker</string>
+    <string name="mood_tracker_description">Pantau perkembangan suasana hatimu</string>
+    <string name="mood_average">Mood Rata-rata</string>
+    <string name="mood_entries">Entri Mood</string>
+    <string name="mood_streak">Streak</string>
+    <string name="mood_history">Riwayat Mood</string>
+    <string name="mood_week">Minggu</string>
+    <string name="mood_month">Bulan</string>
+    <string name="mood_calendar">Kalender Mood</string>
+    <string name="mood_insights">Insight Mood</string>
+    <string name="best_time">Waktu Terbaik</string>
+    <string name="dominant_mood">Mood Dominan</string>
+    <string name="improvement">Peningkatan</string>
+
+    <!-- Profile -->
+    <string name="profile_edit">Edit Profil</string>
+    <string name="profile_account_settings">Pengaturan Akun</string>
+    <string name="profile_notification_settings">Pengaturan Notifikasi</string>
+    <string name="profile_transaction_history">Riwayat Transaksi</string>
+    <string name="profile_help_center">Pusat Bantuan</string>
+    <string name="profile_logout">Keluar</string>
+    <string name="profile_member_since">Bergabung sejak:</string>
+    <string name="profile_journal_count">Jurnal</string>
+    <string name="profile_consultation_count">Konsultasi</string>
+
+    <!-- Recommendations -->
+    <string name="self_talk_audio">Self-Talk Audio</string>
+    <string name="journal_template">Journal Template</string>
+    <string name="psychologist">Psikolog</string>
+
+    <!-- Authentication -->
+    <string name="login">Masuk</string>
+    <string name="register">Daftar</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="forgot_password">Lupa Password?</string>
+    <string name="no_account">Belum punya akun?</string>
+    <string name="have_account">Sudah punya akun?</string>
+    <string name="sign_out">Keluar</string>
+    <string name="login_success">Login berhasil</string>
+    <string name="register_success">Registrasi berhasil</string>
+    <string name="logout_confirmation">Apakah kamu yakin ingin keluar?</string>
+    <string name="yes">Ya</string>
+    <string name="no">Tidak</string>
+</resources>

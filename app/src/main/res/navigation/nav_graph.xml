@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.ruangjiwa.ui.home.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/consultationFragment"
+        android:name="com.example.ruangjiwa.ui.consultation.ConsultationFragment"
+        android:label="Consultation"
+        tools:layout="@layout/fragment_consultation" />
+
+    <fragment
+        android:id="@+id/journalFragment"
+        android:name="com.example.ruangjiwa.ui.journal.JournalFragment"
+        android:label="Journal"
+        tools:layout="@layout/fragment_journal" />
+
+    <fragment
+        android:id="@+id/moodFragment"
+        android:name="com.example.ruangjiwa.ui.mood.MoodFragment"
+        android:label="Mood"
+        tools:layout="@layout/fragment_mood" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.ruangjiwa.ui.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+</navigation>

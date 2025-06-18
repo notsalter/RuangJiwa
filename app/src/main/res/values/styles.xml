@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mood Slider Style -->
+    <style name="MoodSliderStyle" parent="Widget.AppCompat.SeekBar">
+        <item name="android:progressDrawable">@drawable/mood_slider_progress</item>
+        <item name="android:thumb">@drawable/mood_slider_thumb</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">8dp</item>
+    </style>
+
+    <!-- Medium Text Style -->
+    <style name="MediumTextStyle">
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+</resources>

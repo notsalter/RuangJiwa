@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392198224150",
+    "project_id": "ruangjiwa-59670",
+    "storage_bucket": "ruangjiwa-59670.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392198224150:android:d627b6fc6a5c07d019f837",
+        "android_client_info": {
+          "package_name": "com.example.ruangjiwa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkL5Pts5XiqyvOqW6VvIHjPJ2Sne1-QcI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

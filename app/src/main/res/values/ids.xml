@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home Fragment IDs -->
+    <item name="cardUpcomingConsultation" type="id" />
+    <item name="tvNoConsultation" type="id" />
+    <item name="tvPsychologistName" type="id" />
+    <item name="tvPsychologistSpecialty" type="id" />
+    <item name="tvConsultationDateTime" type="id" />
+    <item name="btnVideoCall" type="id" />
+    <item name="btnChat" type="id" />
+    <item name="rvRecommendations" type="id" />
+    <item name="tvMoodDate" type="id" />
+    <item name="layoutHappy" type="id" />
+    <item name="layoutNeutral" type="id" />
+    <item name="layoutSad" type="id" />
+    <item name="layoutAnxious" type="id" />
+    <item name="btnSaveMood" type="id" />
+    <item name="sliderIntensity" type="id" />
+    <item name="etMoodNotes" type="id" />
+    <item name="quickConsultation" type="id" />
+    <item name="quickJournal" type="id" />
+    <item name="quickMood" type="id" />
+    <item name="quickSelfTalk" type="id" />
+
+    <!-- Journal Related IDs -->
+    <item name="tv_day_of_week" type="id" />
+    <item name="tv_day_of_month" type="id" />
+    <item name="card_date" type="id" />
+    <item name="journal_date" type="id" />
+    <item name="journal_mood" type="id" />
+    <item name="journal_title" type="id" />
+    <item name="journal_preview" type="id" />
+    <item name="journal_time" type="id" />
+    <item name="journal_word_count" type="id" />
+
+    <!-- Mood History IDs -->
+    <item name="tv_date_time" type="id" />
+    <item name="tv_notes" type="id" />
+
+    <!-- Profile Fragment IDs -->
+    <item name="tvUserName" type="id" />
+    <item name="tvUserEmail" type="id" />
+    <item name="ivUserPhoto" type="id" />
+    <item name="tvMemberSince" type="id" />
+    <item name="tvJournalCount" type="id" />
+    <item name="tvConsultationCount" type="id" />
+    <item name="btnEditProfile" type="id" />
+    <item name="layoutAccountSettings" type="id" />
+    <item name="layoutNotificationSettings" type="id" />
+    <item name="layoutTransactionHistory" type="id" />
+    <item name="layoutHelpCenter" type="id" />
+    <item name="btnLogout" type="id" />
+</resources>
+
