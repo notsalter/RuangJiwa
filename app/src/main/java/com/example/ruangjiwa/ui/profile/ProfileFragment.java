@@ -48,6 +48,13 @@ public class ProfileFragment extends Fragment {
         setupButtons();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Reload user data when coming back to this fragment
+        loadUserProfile();
+    }
+
     private void loadUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -63,8 +70,8 @@ public class ProfileFragment extends Fragment {
             if (user.getPhotoUrl() != null) {
                 Glide.with(requireContext())
                     .load(user.getPhotoUrl())
-                    .placeholder(R.drawable.ic_profile)
-                    .error(R.drawable.ic_profile)
+                    .placeholder(R.drawable.default_profile)
+                    .error(R.drawable.default_profile)
                     .circleCrop()
                     .into(binding.profileImage);
             }
@@ -78,73 +85,69 @@ public class ProfileFragment extends Fragment {
     }
 
     private void fetchUserData(String uid) {
-        // In a real app, this would fetch additional user data from Firestore
-        // For now, we'll just use placeholder data
-        // Add profile stats using String resources instead of directly setting text
-        // The ProfileFragment.java has references to IDs that don't exist in the layout
-        // So we'll use TextView views created programmatically instead
-
-        // Create TextViews for the stats
-        TextView tvMemberSince = new TextView(requireContext());
-        tvMemberSince.setText("Bergabung sejak: Mei 2025");
-        TextView tvJournalCount = new TextView(requireContext());
-        tvJournalCount.setText("28");
-        TextView tvConsultationCount = new TextView(requireContext());
-        tvConsultationCount.setText("5");
-
-        // We can add these to a container in the layout if needed
+        // Fetch user data from Firestore
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    // You can extract additional user information here if needed
+                    // For example:
+                    // String memberSince = documentSnapshot.getString("memberSince");
+                    // Long journalCount = documentSnapshot.getLong("journalCount");
+                }
+            })
+            .addOnFailureListener(e -> {
+                // Handle failure
+            });
     }
 
     private void setupButtons() {
         // Edit Profile Button
         binding.editProfileButton.setOnClickListener(v -> {
-            // Open edit profile screen
-            Toast.makeText(requireContext(), "Membuka halaman edit profil", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(requireContext(), EditProfileActivity.class);
+            startActivity(intent);
         });
 
         // Account Settings Button
         binding.accountSettingsContainer.setOnClickListener(v -> {
-            // Open account settings
-            Toast.makeText(requireContext(), "Membuka pengaturan akun", Toast.LENGTH_SHORT).show();
+            // Open account settings - for now, redirect to Edit Profile
+            Intent intent = new Intent(requireContext(), EditProfileActivity.class);
+            startActivity(intent);
         });
 
         // Notification Settings Button
         binding.notificationSettingsContainer.setOnClickListener(v -> {
-            // Open notification settings
-            Toast.makeText(requireContext(), "Membuka pengaturan notifikasi", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "Notification settings will be available soon", Toast.LENGTH_SHORT).show();
+        });
+
+        // Privacy Settings Button
+        binding.privacySettingsContainer.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Privacy settings will be available soon", Toast.LENGTH_SHORT).show();
+        });
+
+        // Premium Subscription Button
+        binding.subscriptionContainer.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Subscription features will be available soon", Toast.LENGTH_SHORT).show();
         });
 
         // Transaction History Button
-        if (getView() != null) {
-            View transactionHistoryContainer = getView().findViewById(R.id.transactionHistoryContainer);
-            if (transactionHistoryContainer != null) {
-                transactionHistoryContainer.setOnClickListener(v -> {
-                    // Open transaction history
-                    Toast.makeText(requireContext(), "Membuka riwayat transaksi", Toast.LENGTH_SHORT).show();
-                });
-            }
-        }
+        binding.transactionHistoryContainer.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Transaction history will be available soon", Toast.LENGTH_SHORT).show();
+        });
 
-        // Help Center Button
-        if (getView() != null) {
-            View helpSupportContainer = getView().findViewById(R.id.helpSupportContainer);
-            if (helpSupportContainer != null) {
-                helpSupportContainer.setOnClickListener(v -> {
-                    // Open help center
-                    Toast.makeText(requireContext(), "Membuka pusat bantuan", Toast.LENGTH_SHORT).show();
-                });
-            }
-        }
+        // Help & Support Button
+        binding.helpSupportContainer.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Help & support will be available soon", Toast.LENGTH_SHORT).show();
+        });
+
+        // Terms & Conditions Button
+        binding.termsConditionsContainer.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "Terms & conditions will be available soon", Toast.LENGTH_SHORT).show();
+        });
 
         // Logout Button
-        if (getView() != null) {
-            View logoutButton = getView().findViewById(R.id.logoutButton);
-            if (logoutButton != null) {
-                logoutButton.setOnClickListener(v -> {
-                    logoutUser();
-                });
-            }
-        }
+        binding.logoutButton.setOnClickListener(v -> {
+            logoutUser();
+        });
     }
 
     private void logoutUser() {
