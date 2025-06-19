@@ -255,14 +255,15 @@ public class MoodTrackerFragment extends Fragment {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -29); // Start from 29 days ago
         SimpleDateFormat keyFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat displayFormat = new SimpleDateFormat("d MMM", new Locale("id", "ID"));
 
         int index = 0;
         for (int i = 0; i < 30; i++) {
             String dateKey = keyFormat.format(calendar.getTime());
-            String displayDate = dateDisplayMap.getOrDefault(dateKey,
-                    new SimpleDateFormat("d MMM", new Locale("id", "ID")).format(calendar.getTime()));
+            // Use the display date from Firestore if available, otherwise format the current calendar date
+            String displayDate = dateDisplayMap.getOrDefault(dateKey, displayFormat.format(calendar.getTime()));
 
-            // Add the label for this date
+            // Add label for this date to X-axis
             xAxisLabels.add(displayDate);
 
             if (entriesByDate.containsKey(dateKey)) {
@@ -272,12 +273,12 @@ public class MoodTrackerFragment extends Fragment {
                 chartEntries.add(new Entry(index, avgMoodValue));
             }
 
-
             calendar.add(Calendar.DAY_OF_MONTH, 1);
             index++;
         }
 
-        // Update chart with the generated data
+        // Update chart with the generated data - clear all existing data first
+        binding.moodChart.clear();
         updateMoodChart(chartEntries, xAxisLabels);
     }
 
@@ -337,8 +338,14 @@ public class MoodTrackerFragment extends Fragment {
         // Create line data object with the dataset
         LineData lineData = new LineData(dataSet);
 
-        // Configure chart
-        binding.moodChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(xAxisLabels));
+        // Configure chart with the actual data labels
+        XAxis xAxis = binding.moodChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(xAxisLabels));
+        xAxis.setLabelRotationAngle(45f);
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+
         binding.moodChart.setData(lineData);
         binding.moodChart.getAxisLeft().setValueFormatter(new ValueFormatter() {
             @Override
@@ -352,7 +359,14 @@ public class MoodTrackerFragment extends Fragment {
             }
         });
 
-        // Refresh the chart
+        // Additional chart configurations
+        binding.moodChart.getAxisRight().setEnabled(false);
+        binding.moodChart.getLegend().setEnabled(false);
+        binding.moodChart.getDescription().setEnabled(false);
+
+        // Force refresh and display the chart with sufficient spacing
+        binding.moodChart.setExtraOffsets(10f, 10f, 10f, 10f);
+        binding.moodChart.animateXY(500, 500);
         binding.moodChart.invalidate();
     }
 

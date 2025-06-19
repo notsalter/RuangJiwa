@@ -22,8 +22,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MoodFragment extends Fragment {
 
@@ -159,83 +161,231 @@ public class MoodFragment extends Fragment {
     }
 
     private void loadMoodData() {
-        // In a real app, this would fetch from Firebase
-        // For demo purposes, using mock data
-
+        // Clear existing entries
         moodEntries.clear();
 
-        // Create sample mood data for the past week
-        Calendar cal = Calendar.getInstance();
-
-        // Today
-        moodEntries.add(new MoodEntry(
-                "1",
-                auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "user1",
-                Mood.HAPPY,
-                8, // intensity 1-10
-                "Presentasi projekku berjalan dengan sangat baik! Tim sangat mengapresiasi hasil kerjaku.",
-                new Date(),
-                new String[]{"Prestasi", "Kerja"}
-        ));
-
-        // Yesterday
-        cal.add(Calendar.DAY_OF_MONTH, -1);
-        moodEntries.add(new MoodEntry(
-                "2",
-                auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "user1",
-                Mood.NEUTRAL,
-                5,
-                "Hari yang biasa saja. Menghabiskan waktu dengan rutinitas normal.",
-                cal.getTime(),
-                new String[]{"Rutinitas"}
-        ));
-
-        // 2 days ago
-        cal.add(Calendar.DAY_OF_MONTH, -1);
-        moodEntries.add(new MoodEntry(
-                "3",
-                auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "user1",
-                Mood.SAD,
-                3,
-                "Berita buruk dari rumah membuat mood turun hari ini.",
-                cal.getTime(),
-                new String[]{"Keluarga", "Kesedihan"}
-        ));
-
-        // 3-6 days ago
-        Mood[] moods = {Mood.NEUTRAL, Mood.HAPPY, Mood.EXCITED, Mood.ANXIOUS};
-        int[] intensities = {6, 7, 9, 4};
-        for (int i = 0; i < 4; i++) {
-            cal.add(Calendar.DAY_OF_MONTH, -1);
-            moodEntries.add(new MoodEntry(
-                    "mood" + (i + 4),
-                    auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : "user1",
-                    moods[i],
-                    intensities[i],
-                    "",
-                    cal.getTime(),
-                    new String[]{}
-            ));
+        // Ensure we have an authenticated user
+        if (auth.getCurrentUser() == null) {
+            Toast.makeText(requireContext(), "Anda perlu login terlebih dahulu", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Update mood history
-        moodHistoryAdapter.notifyDataSetChanged();
+        String userId = auth.getCurrentUser().getUid();
 
-        // Update chart with mood data
-        updateMoodChart();
+        // Setup date range for the last 30 days
+        Calendar endCalendar = Calendar.getInstance();
+        Calendar startCalendar = Calendar.getInstance();
+        startCalendar.add(Calendar.DAY_OF_MONTH, -29); // From 29 days ago (for a 30-day period)
+
+        // Reset time to start of day for start date and end of day for end date
+        startCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        startCalendar.set(Calendar.MINUTE, 0);
+        startCalendar.set(Calendar.SECOND, 0);
+
+        endCalendar.set(Calendar.HOUR_OF_DAY, 23);
+        endCalendar.set(Calendar.MINUTE, 59);
+        endCalendar.set(Calendar.SECOND, 59);
+
+        Date startDate = startCalendar.getTime();
+        Date endDate = endCalendar.getTime();
+
+        // Show loading indicator
+        if (binding.progressBar != null) {
+            binding.progressBar.setVisibility(View.VISIBLE);
+        }
+
+        // Query Firestore for mood entries in the date range
+        db.collection("users").document(userId)
+                .collection("mood_entries")
+                .whereGreaterThanOrEqualTo("timestamp", startDate)
+                .whereLessThanOrEqualTo("timestamp", endDate)
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        for (com.google.firebase.firestore.QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            try {
+                                // Extract mood data from document
+                                String moodStr = document.getString("mood");
+                                Mood mood = Mood.valueOf(moodStr);
+                                String note = document.getString("note");
+                                Date timestamp = document.getDate("timestamp");
+
+                                // Create MoodEntry object and add to list
+                                MoodEntry entry = new MoodEntry(
+                                        document.getId(),
+                                        userId,
+                                        mood,
+                                        getMoodIntensity(mood), // Convert mood to intensity
+                                        note != null ? note : "",
+                                        timestamp,
+                                        new String[]{}  // Tags not implemented yet
+                                );
+
+                                moodEntries.add(entry);
+                            } catch (Exception e) {
+                                // Skip entries with parsing errors
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // Update mood history RecyclerView
+                        moodHistoryAdapter.notifyDataSetChanged();
+
+                        // Update mood insights based on real data
+                        updateMoodInsights();
+
+                        // Update mood statistics based on real data
+                        updateMoodStats();
+
+                        // Update chart with real mood data
+                        updateMoodChart();
+
+                    } else {
+                        // No mood entries found
+                        Toast.makeText(requireContext(), "Belum ada data mood", Toast.LENGTH_SHORT).show();
+                    }
+
+                    // Hide loading indicator
+                    if (binding.progressBar != null) {
+                        binding.progressBar.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Gagal memuat data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+
+                    // Hide loading indicator
+                    if (binding.progressBar != null) {
+                        binding.progressBar.setVisibility(View.GONE);
+                    }
+                });
     }
 
+    // Helper method to convert mood to intensity value (1-10)
+    private int getMoodIntensity(Mood mood) {
+        switch (mood) {
+            case EXCITED: return 10;
+            case HAPPY: return 8;
+            case NEUTRAL: return 5;
+            case SAD: return 3;
+            case ANXIOUS: return 2;
+            default: return 5;
+        }
+    }
+
+    /**
+     * Setup mood statistics UI and components
+     */
     private void setupMoodStats() {
-        // Calculate average mood
-        double averageMood = 7.5; // In a real app, this would be calculated
-        binding.tvAverageMood.setText(String.format(Locale.getDefault(), "%.1f", averageMood));
+        // Initialize statistics with default values
+        binding.tvAverageMood.setText("0.0");
+        binding.tvEntryCount.setText("0");
+        binding.tvStreak.setText("0");
+
+        // If we have mood entries already, update the stats
+        if (moodEntries != null && !moodEntries.isEmpty()) {
+            updateMoodStats();
+        }
+    }
+
+    /**
+     * Calculate and update mood statistics based on real data
+     */
+    private void updateMoodStats() {
+        if (moodEntries == null || moodEntries.isEmpty()) {
+            // No entries, use defaults or show zeros
+            binding.tvAverageMood.setText("0.0");
+            binding.tvEntryCount.setText("0");
+            binding.tvStreak.setText("0");
+            return;
+        }
 
         // Set mood entry count
         binding.tvEntryCount.setText(String.valueOf(moodEntries.size()));
 
-        // Set streak count
-        int streak = 5; // In a real app, this would be calculated
+        // Calculate average mood intensity
+        int totalIntensity = 0;
+        for (MoodEntry entry : moodEntries) {
+            totalIntensity += entry.getIntensity();
+        }
+        double averageMood = (double) totalIntensity / moodEntries.size();
+        binding.tvAverageMood.setText(String.format(Locale.getDefault(), "%.1f", averageMood));
+
+        // Calculate streak (consecutive days with mood entries)
+        int streak = calculateStreak();
         binding.tvStreak.setText(String.valueOf(streak));
+    }
+
+    /**
+     * Calculate the current streak of consecutive days with mood entries
+     */
+    private int calculateStreak() {
+        if (moodEntries == null || moodEntries.isEmpty()) {
+            return 0;
+        }
+
+        // Sort entries by date (most recent first)
+        List<MoodEntry> sortedEntries = new ArrayList<>(moodEntries);
+        sortedEntries.sort((e1, e2) -> e2.getDate().compareTo(e1.getDate()));
+
+        // Start counting from today
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        // Check if we have an entry for today
+        boolean hasEntryForToday = false;
+        for (MoodEntry entry : sortedEntries) {
+            Calendar entryCal = Calendar.getInstance();
+            entryCal.setTime(entry.getDate());
+            entryCal.set(Calendar.HOUR_OF_DAY, 0);
+            entryCal.set(Calendar.MINUTE, 0);
+            entryCal.set(Calendar.SECOND, 0);
+            entryCal.set(Calendar.MILLISECOND, 0);
+
+            if (entryCal.equals(today)) {
+                hasEntryForToday = true;
+                break;
+            }
+        }
+
+        int streak = hasEntryForToday ? 1 : 0;
+
+        if (streak > 0) {
+            // Start checking consecutive previous days
+            Calendar checkDate = today;
+
+            while (true) {
+                // Move to the previous day
+                checkDate = (Calendar) checkDate.clone();
+                checkDate.add(Calendar.DAY_OF_MONTH, -1);
+
+                boolean hasEntryForDate = false;
+                for (MoodEntry entry : sortedEntries) {
+                    Calendar entryCal = Calendar.getInstance();
+                    entryCal.setTime(entry.getDate());
+                    entryCal.set(Calendar.HOUR_OF_DAY, 0);
+                    entryCal.set(Calendar.MINUTE, 0);
+                    entryCal.set(Calendar.SECOND, 0);
+                    entryCal.set(Calendar.MILLISECOND, 0);
+
+                    if (entryCal.equals(checkDate)) {
+                        hasEntryForDate = true;
+                        break;
+                    }
+                }
+
+                if (hasEntryForDate) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return streak;
     }
 
     private void setupTimePeriodSelection() {
@@ -278,34 +428,65 @@ public class MoodFragment extends Fragment {
                 // Generate date labels for past week
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DAY_OF_MONTH, -6); // Start from 6 days ago
+                SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", new Locale("id", "ID"));
 
                 for (int i = 0; i < 7; i++) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", new Locale("id", "ID"));
                     String dateLabel = sdf.format(cal.getTime());
 
-                    // Find mood for this date (if exists)
-                    int moodIntensity = findMoodIntensityForDate(cal.getTime());
+                    // Find mood intensity for this date from real data
+                    int moodIntensity = findAverageMoodIntensityForDate(cal.getTime());
 
+                    // Only add a data point if we actually have mood data for this date
                     dataPoints.add(new MoodDataPoint(dateLabel, moodIntensity));
                     cal.add(Calendar.DAY_OF_MONTH, 1);
                 }
             } else {
-                // Monthly view (simplified for demo)
-                String[] dates = {"01 Mei", "05 Mei", "10 Mei", "15 Mei", "20 Mei", "25 Mei", "30 Mei"};
-                int[] intensities = {6, 8, 7, 4, 5, 7, 8};
+                // Monthly view (30 days)
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, -29); // Start from 29 days ago
+                SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", new Locale("id", "ID"));
 
-                for (int i = 0; i < dates.length; i++) {
-                    dataPoints.add(new MoodDataPoint(dates[i], intensities[i]));
+                // First, prepare the labels for all 30 days
+                List<String> allDateLabels = new ArrayList<>();
+                for (int i = 0; i < 30; i++) {
+                    allDateLabels.add(sdf.format(cal.getTime()));
+                    cal.add(Calendar.DAY_OF_MONTH, 1);
                 }
-            }
 
-            // Safety check - ensure we have data before proceeding
-            if (dataPoints.isEmpty()) {
-                dataPoints.add(new MoodDataPoint("Today", 5));
+                // Reset calendar
+                cal = Calendar.getInstance();
+                cal.add(Calendar.DAY_OF_MONTH, -29); // Start from 29 days ago
+
+                // Only display 6-8 labels on x-axis for better readability
+                int step = 5;  // Show every 5th day
+
+                for (int i = 0; i < 30; i++) {
+                    String dateLabel = sdf.format(cal.getTime());
+
+                    // Find mood intensity for this date from real data
+                    int moodIntensity = findAverageMoodIntensityForDate(cal.getTime());
+
+                    // Always add data point for all days
+                    dataPoints.add(new MoodDataPoint(
+                            // Only show label for every 5th day to avoid crowding
+                            (i % step == 0) ? dateLabel : "",
+                            moodIntensity
+                    ));
+
+                    cal.add(Calendar.DAY_OF_MONTH, 1);
+                }
             }
 
             // Explicitly check that chart exists before updating
             if (binding != null && binding.moodChart != null && chartManager != null) {
+                // Make sure we have at least one data point
+                if (dataPoints.isEmpty()) {
+                    // If no mood data, add an empty placeholder
+                    Calendar cal = Calendar.getInstance();
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", new Locale("id", "ID"));
+                    dataPoints.add(new MoodDataPoint(sdf.format(cal.getTime()), 0));
+                }
+
                 chartManager.updateChart(dataPoints);
             }
         } catch (Exception e) {
@@ -319,7 +500,14 @@ public class MoodFragment extends Fragment {
         }
     }
 
-    private int findMoodIntensityForDate(Date date) {
+    /**
+     * Calculate the average mood intensity for a specific date
+     */
+    private int findAverageMoodIntensityForDate(Date date) {
+        if (moodEntries == null || moodEntries.isEmpty()) {
+            return 0; // No data, return 0 (which means no data point)
+        }
+
         // Compare just the date part (ignoring time)
         Calendar dateCal = Calendar.getInstance();
         dateCal.setTime(date);
@@ -328,6 +516,9 @@ public class MoodFragment extends Fragment {
         dateCal.set(Calendar.SECOND, 0);
         dateCal.set(Calendar.MILLISECOND, 0);
 
+        List<MoodEntry> entriesForDate = new ArrayList<>();
+
+        // Find all entries for this date
         for (MoodEntry entry : moodEntries) {
             Calendar entryCal = Calendar.getInstance();
             entryCal.setTime(entry.getDate());
@@ -336,13 +527,169 @@ public class MoodFragment extends Fragment {
             entryCal.set(Calendar.SECOND, 0);
             entryCal.set(Calendar.MILLISECOND, 0);
 
-            if (dateCal.equals(entryCal)) {
-                return entry.getIntensity();
+            if (dateCal.getTimeInMillis() == entryCal.getTimeInMillis()) {
+                entriesForDate.add(entry);
             }
         }
 
-        // Default value if no mood found for the date
-        return 5;
+        // Calculate average mood intensity for this date
+        if (!entriesForDate.isEmpty()) {
+            int totalIntensity = 0;
+            for (MoodEntry entry : entriesForDate) {
+                totalIntensity += entry.getIntensity();
+            }
+            return totalIntensity / entriesForDate.size();
+        }
+
+        // No entries for this date
+        return 0;
+    }
+
+    /**
+     * Update mood insights based on actual mood data from Firestore
+     */
+    private void updateMoodInsights() {
+        if (moodEntries == null || moodEntries.isEmpty()) {
+            // No data to analyze, keep default insights
+            return;
+        }
+
+        try {
+            // 1. Find best time insight (morning, afternoon, evening)
+            Map<String, Integer> timeOfDayCount = new HashMap<>();
+            Map<String, Integer> timeOfDayTotal = new HashMap<>();
+
+            for (MoodEntry entry : moodEntries) {
+                if (entry.getDate() != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTime(entry.getDate());
+                    int hour = cal.get(Calendar.HOUR_OF_DAY);
+
+                    String timeOfDay;
+                    if (hour >= 5 && hour < 12) {
+                        timeOfDay = "pagi";
+                    } else if (hour >= 12 && hour < 17) {
+                        timeOfDay = "siang";
+                    } else if (hour >= 17 && hour < 21) {
+                        timeOfDay = "sore";
+                    } else {
+                        timeOfDay = "malam";
+                    }
+
+                    timeOfDayCount.put(timeOfDay, timeOfDayCount.getOrDefault(timeOfDay, 0) + 1);
+                    timeOfDayTotal.put(timeOfDay, timeOfDayTotal.getOrDefault(timeOfDay, 0) + entry.getIntensity());
+                }
+            }
+
+            // Find best time of day for mood
+            String bestTimeOfDay = null;
+            float bestAverage = 0;
+
+            for (String timeOfDay : timeOfDayCount.keySet()) {
+                int count = timeOfDayCount.get(timeOfDay);
+                int total = timeOfDayTotal.get(timeOfDay);
+                float average = (float) total / count;
+
+                if (average > bestAverage) {
+                    bestAverage = average;
+                    bestTimeOfDay = timeOfDay;
+                }
+            }
+
+            if (bestTimeOfDay != null) {
+                binding.tvBestTimeInsight.setText(
+                        "Mood-mu cenderung lebih baik di waktu " + bestTimeOfDay);
+            }
+
+            // 2. Find dominant mood
+            Map<Mood, Integer> moodCounts = new HashMap<>();
+            for (MoodEntry entry : moodEntries) {
+                moodCounts.put(entry.getMood(), moodCounts.getOrDefault(entry.getMood(), 0) + 1);
+            }
+
+            Mood dominantMood = null;
+            int highestCount = 0;
+
+            for (Map.Entry<Mood, Integer> entry : moodCounts.entrySet()) {
+                if (entry.getValue() > highestCount) {
+                    highestCount = entry.getValue();
+                    dominantMood = entry.getKey();
+                }
+            }
+
+            if (dominantMood != null) {
+                String moodName;
+                switch (dominantMood) {
+                    case EXCITED: moodName = "sangat senang"; break;
+                    case HAPPY: moodName = "senang"; break;
+                    case NEUTRAL: moodName = "biasa"; break;
+                    case SAD: moodName = "sedih"; break;
+                    case ANXIOUS: moodName = "cemas"; break;
+                    default: moodName = "bervariasi";
+                }
+
+                binding.tvDominantMoodInsight.setText(
+                        "Minggu ini kamu lebih sering merasa " + moodName);
+            }
+
+            // 3. Calculate improvement insight (compare recent week with previous week)
+            if (moodEntries.size() >= 7) {
+                List<MoodEntry> recentWeek = new ArrayList<>();
+                List<MoodEntry> previousWeek = new ArrayList<>();
+
+                Calendar oneWeekAgo = Calendar.getInstance();
+                oneWeekAgo.add(Calendar.DAY_OF_MONTH, -7);
+
+                Calendar twoWeeksAgo = Calendar.getInstance();
+                twoWeeksAgo.add(Calendar.DAY_OF_MONTH, -14);
+
+                for (MoodEntry entry : moodEntries) {
+                    Date entryDate = entry.getDate();
+                    if (entryDate.after(oneWeekAgo.getTime())) {
+                        recentWeek.add(entry);
+                    } else if (entryDate.after(twoWeeksAgo.getTime()) && entryDate.before(oneWeekAgo.getTime())) {
+                        previousWeek.add(entry);
+                    }
+                }
+
+                if (!recentWeek.isEmpty() && !previousWeek.isEmpty()) {
+                    // Calculate averages
+                    float recentAvg = calculateAverageMoodIntensity(recentWeek);
+                    float previousAvg = calculateAverageMoodIntensity(previousWeek);
+
+                    // Calculate percentage change
+                    float change = ((recentAvg - previousAvg) / previousAvg) * 100;
+
+                    if (Math.abs(change) > 5) {  // Only show significant changes
+                        String changeStr = String.format(Locale.getDefault(), "%.0f%%", Math.abs(change));
+                        String direction = change > 0 ? "peningkatan" : "penurunan";
+
+                        binding.tvImprovementInsight.setText(
+                                "Ada " + direction + " mood sebesar " + changeStr + " dibanding minggu lalu");
+                    } else {
+                        binding.tvImprovementInsight.setText(
+                                "Mood-mu relatif stabil dibandingkan minggu lalu");
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            // If there's any error in analysis, log it but don't crash the app
+            e.printStackTrace();
+        }
+    }
+
+    private float calculateAverageMoodIntensity(List<MoodEntry> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return 0f;
+        }
+
+        int total = 0;
+        for (MoodEntry entry : entries) {
+            total += entry.getIntensity();
+        }
+
+        return (float) total / entries.size();
     }
 
     @Override
