@@ -1,50 +1,50 @@
 package com.example.ruangjiwa.data.model;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
- * Model class representing a journal entry
+ * Model class representing a journal entry in the RuangJiwa app.
  */
 public class JournalEntry {
     private String id;
-    private String userId;
-    private String content;
-    private Date date;
-    private Mood mood;
-    private String[] tags;
-    private boolean isPrivate;
     private String title;
-    private Date createdAt;
+    private String content;
+    private Date createdAt; // Using createdAt instead of date to match existing code
+    private Mood mood;
+    private List<String> tags;  // Changed from String[] to List<String>
+    private boolean isPrivate;
+    private boolean isFavorite;
 
+    // Empty constructor for Firebase
     public JournalEntry() {
-        // Required empty constructor for Firebase
-        this.createdAt = new Date();
+        this.tags = new ArrayList<>();  // Initialize as empty ArrayList
     }
 
-    public JournalEntry(String id, String userId, String content, Date date, Mood mood, String[] tags, boolean isPrivate) {
+    public JournalEntry(String id, String title, String content, Date createdAt, String moodString) {
         this.id = id;
-        this.userId = userId;
-        this.content = content;
-        this.date = date;
-        this.mood = mood;
-        this.tags = tags;
-        this.isPrivate = isPrivate;
-        this.createdAt = new Date();
-    }
-
-    // Constructor with title
-    public JournalEntry(String id, String userId, String title, String content, Date date, Mood mood, String[] tags, boolean isPrivate) {
-        this.id = id;
-        this.userId = userId;
         this.title = title;
         this.content = content;
-        this.date = date;
-        this.mood = mood;
-        this.tags = tags;
-        this.isPrivate = isPrivate;
-        this.createdAt = new Date();
+        this.createdAt = createdAt;
+        this.mood = Mood.HAPPY; // Default mood
+        this.tags = new ArrayList<>();  // Initialize as empty ArrayList
+        this.isPrivate = false;
+        this.isFavorite = false;
     }
 
+    public JournalEntry(String id, String title, String content, Date createdAt, Mood mood, List<String> tags, boolean isPrivate) {
+        this.id = id;
+        this.title = title;
+        this.content = content;
+        this.createdAt = createdAt;
+        this.mood = mood;
+        this.tags = tags != null ? tags : new ArrayList<>();
+        this.isPrivate = isPrivate;
+        this.isFavorite = false;
+    }
+
+    // Getters and setters
     public String getId() {
         return id;
     }
@@ -53,12 +53,12 @@ public class JournalEntry {
         this.id = id;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getTitle() {
+        return title;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getContent() {
@@ -69,12 +69,20 @@ public class JournalEntry {
         this.content = content;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
     public Date getDate() {
-        return date;
+        return createdAt; // Alias for getCreatedAt for compatibility
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
     public void setDate(Date date) {
-        this.date = date;
+        this.createdAt = date; // Alias for setCreatedAt for compatibility
     }
 
     public Mood getMood() {
@@ -85,11 +93,19 @@ public class JournalEntry {
         this.mood = mood;
     }
 
-    public String[] getTags() {
+    public void setMoodFromString(String moodString) {
+        try {
+            this.mood = Mood.valueOf(moodString.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            this.mood = Mood.HAPPY; // Default mood
+        }
+    }
+
+    public List<String> getTags() {
         return tags;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(List<String> tags) {
         this.tags = tags;
     }
 
@@ -101,51 +117,11 @@ public class JournalEntry {
         this.isPrivate = isPrivate;
     }
 
-    public String getTitle() {
-        return title != null ? title : "Untitled Entry";
+    public boolean isFavorite() {
+        return isFavorite;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt != null ? createdAt : date;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public String getMoodEmoji() {
-        if (mood == null) return "😐";
-
-        switch (mood) {
-            case HAPPY: return "😊";
-            case SAD: return "😢";
-            case ANXIOUS: return "😰";
-            case EXCITED: return "😃";
-            case NEUTRAL: return "😐";
-            default: return "😐";
-        }
-    }
-
-    public String getPreview() {
-        if (content == null || content.isEmpty()) {
-            return "No content";
-        }
-
-        // Return first 50 characters as preview or the whole content if shorter
-        return content.length() > 50 ? content.substring(0, 50) + "..." : content;
-    }
-
-    public int getWordCount() {
-        if (content == null || content.isEmpty()) {
-            return 0;
-        }
-
-        // Simple word count by splitting on whitespace
-        String[] words = content.trim().split("\\s+");
-        return words.length;
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
     }
 }

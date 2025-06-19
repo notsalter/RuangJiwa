@@ -119,19 +119,184 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_content"
-        android:layout_width="0dp"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/content_scroll_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="Hari ini adalah hari yang luar biasa! Presentasi projekku mendapat apresiasi yang sangat baik dari tim. Aku merasa sangat bersyukur atas dukungan rekan-rekan kerja yang selalu membantu.\n\nPengalaman ini mengajarkan bahwa kolaborasi dan komunikasi adalah kunci untuk hasil yang baik. Aku juga senang karena akhirnya bisa menyelesaikan bagian tersulit dari proyek ini tepat waktu. Rasanya seperti beban berat terangkat dari pundak. Sekarang aku bisa fokus pada tahap berikutnya dengan lebih tenang."
-        android:textColor="@color/gray_800"
-        android:textSize="14sp"
+        android:fillViewport="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/layout_private" />
+        app:layout_constraintTop_toBottomOf="@+id/layout_private">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/et_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:background="@null"
+                android:gravity="top|start"
+                android:hint="Tulis isi catatan di sini..."
+                android:inputType="textMultiLine|textCapSentences"
+                android:minHeight="150dp"
+                android:padding="8dp"
+                android:textColor="@color/gray_800"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tv_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:padding="8dp"
+                android:text=""
+                android:textColor="@color/gray_800"
+                android:textSize="14sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/mood_selector_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/content_scroll_view"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pilih Perasaan"
+            android:textColor="@color/gray_800"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/mood_happy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:background="@drawable/bg_mood_selected">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_emotion_happy"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_mood_icon"
+                        android:tint="@color/yellow_500" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Senang"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/mood_neutral"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_emotion_neutral"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_mood_icon"
+                        android:tint="@color/blue_500" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Netral"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/mood_sad"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_emotion_sad"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_mood_icon"
+                        android:tint="@color/gray_500" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sedih"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/mood_anxious"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:layout_marginStart="8dp">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_emotion_anxious"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_mood_icon"
+                        android:tint="@color/red_500" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cemas"
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
 
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chip_group_tags"
@@ -142,25 +307,9 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_content">
+        app:layout_constraintTop_toBottomOf="@+id/mood_selector_container">
 
-        <com.google.android.material.chip.Chip
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Prestasi"
-            android:textSize="12sp"
-            app:chipBackgroundColor="@color/blue_50"
-            app:chipCornerRadius="12dp"
-            app:chipStrokeWidth="0dp" />
-
-        <com.google.android.material.chip.Chip
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bersyukur"
-            android:textSize="12sp"
-            app:chipBackgroundColor="@color/green_50"
-            app:chipCornerRadius="12dp"
-            app:chipStrokeWidth="0dp" />
+        <!-- Sample tags - will be populated programmatically -->
     </com.google.android.material.chip.ChipGroup>
 
     <LinearLayout

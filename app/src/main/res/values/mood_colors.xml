@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mood colors -->
+    <color name="happy_color">#4CAF50</color>    <!-- Green -->
+    <color name="calm_color">#2196F3</color>     <!-- Blue -->
+    <color name="sad_color">#9C27B0</color>      <!-- Purple -->
+    <color name="anxious_color">#FFC107</color>  <!-- Amber -->
+</resources>
+

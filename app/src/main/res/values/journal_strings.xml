@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Journal feature strings -->
+    <string name="journal_header">Jurnal Refleksi</string>
+    <string name="journal_subheader">Bagikan perasaan dan refleksi Anda untuk membantu proses penyembuhan</string>
+    <string name="all_entries">Semua</string>
+    <string name="favorites">Favorit</string>
+    <string name="by_mood">Berdasarkan Mood</string>
+    <string name="no_journal_entries_yet">Belum Ada Catatan Jurnal</string>
+    <string name="start_journaling_hint">Mulai menulis refleksi hari ini untuk mendokumentasikan perjalanan kesehatan mental Anda</string>
+    <string name="create_first_entry">Buat Catatan Pertama</string>
+    <string name="add_journal_entry">Tambah Jurnal</string>
+    <string name="favorite_journal">Simpan ke Favorit</string>
+    <string name="delete_journal">Hapus Jurnal</string>
+</resources>
+

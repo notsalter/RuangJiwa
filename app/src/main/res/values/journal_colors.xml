@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Journal color values for the RuangJiwa app -->
+    <color name="journal_background">#F5F5F5</color>
+    <color name="journal_text_primary">#333333</color>
+    <color name="journal_text_secondary">#666666</color>
+    <color name="journal_accent">#4CAF50</color>
+    <color name="journal_divider">#DDDDDD</color>
+
+    <!-- Missing colors referenced in item_journal_entry.xml -->
+    <color name="dark_gray_text">#424242</color>
+    <color name="gold">#FFD700</color>
+</resources>

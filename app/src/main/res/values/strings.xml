@@ -75,6 +75,7 @@
     <string name="mood_tracker_description">Pantau perkembangan suasana hatimu</string>
     <string name="mood_average">Mood Rata-rata</string>
     <string name="mood_entries">Entri Mood</string>
+    <string name="mood_entries_count">%d entri mood tercatat</string>
     <string name="mood_streak">Streak</string>
     <string name="mood_history">Riwayat Mood</string>
     <string name="mood_week">Minggu</string>
