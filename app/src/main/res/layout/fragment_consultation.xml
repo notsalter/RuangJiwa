@@ -1,150 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/gray_50">
+    android:orientation="vertical"
+    android:background="@color/background">
 
-    <TextView
-        android:id="@+id/tv_title"
-        android:layout_width="0dp"
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/nav_consultation"
-        android:textSize="20sp"
-        android:textColor="@color/gray_800"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical"
+        android:background="@color/primary"
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tv_subtitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="Temukan psikolog yang tepat untukmu"
-        android:textColor="@color/gray_600"
-        android:textSize="14sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_title" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/input_layout_search"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        app:boxBackgroundColor="@color/white"
-        app:boxCornerRadiusBottomEnd="8dp"
-        app:boxCornerRadiusBottomStart="8dp"
-        app:boxCornerRadiusTopEnd="8dp"
-        app:boxCornerRadiusTopStart="8dp"
-        app:endIconDrawable="@drawable/ic_search"
-        app:endIconMode="custom"
-        app:hintEnabled="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_subtitle">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/et_search"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/search_psychologist"
-            android:inputType="text"
-            android:padding="12dp" />
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <HorizontalScrollView
-        android:id="@+id/scroll_filters"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:scrollbars="none"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/input_layout_search">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chip_group_filters"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:singleLine="true">
+            android:text="Find a Psychologist"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect with professional mental health experts"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:alpha="0.9"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Search Bar -->
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/search_background"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search psychologists..." />
+
+    </LinearLayout>
+
+    <!-- Filter Chips -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:paddingVertical="8dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_all"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:id="@+id/filter_all"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="All"
+                android:layout_marginEnd="8dp"
                 android:checkable="true"
                 android:checked="true"
-                android:text="@string/filter_all" />
+                style="@style/Widget.Material3.Chip.Filter" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_depression"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:id="@+id/filter_anxiety"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Anxiety"
+                android:layout_marginEnd="8dp"
                 android:checkable="true"
-                android:text="@string/filter_depression" />
+                style="@style/Widget.Material3.Chip.Filter" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_anxiety"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:id="@+id/filter_depression"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Depression"
+                android:layout_marginEnd="8dp"
                 android:checkable="true"
-                android:text="@string/filter_anxiety" />
+                style="@style/Widget.Material3.Chip.Filter" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_relationship"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:id="@+id/filter_relationship"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Relationships"
+                android:layout_marginEnd="8dp"
                 android:checkable="true"
-                android:text="@string/filter_relationship" />
+                style="@style/Widget.Material3.Chip.Filter" />
 
             <com.google.android.material.chip.Chip
-                android:id="@+id/chip_trauma"
-                style="@style/Widget.MaterialComponents.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Family Therapy"
+                android:layout_marginEnd="8dp"
                 android:checkable="true"
-                android:text="@string/filter_trauma" />
-        </com.google.android.material.chip.ChipGroup>
+                style="@style/Widget.Material3.Chip.Filter" />
+
+        </LinearLayout>
+
     </HorizontalScrollView>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_psychologists"
-        android:layout_width="0dp"
+    <!-- Psychologists List -->    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/psychologistsRecyclerView"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_weight="1"
+        android:padding="16dp"
         android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scroll_filters" />
+        tools:listitem="@layout/item_psychologist" />
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scroll_filters" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

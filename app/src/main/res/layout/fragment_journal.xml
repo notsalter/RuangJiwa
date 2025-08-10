@@ -1,165 +1,311 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res/auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_gray">
+    android:background="@color/background">
 
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!-- Header with Date Navigation -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingBottom="24dp">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/primary"
+            android:padding="16dp">
 
-            <!-- Header section -->
-            <TextView
-                android:id="@+id/tvJournalHeader"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="24dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="@string/journal_header"
-                android:textColor="@color/black"
-                android:textSize="24sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/tvJournalSubheader"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="16dp"
-                android:text="@string/journal_subheader"
-                android:textColor="@color/gray_text"
-                android:textSize="14sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/tvJournalHeader"
-                app:layout_constraintTop_toBottomOf="@+id/tvJournalHeader" />
-
-            <!-- Filter/Search section -->
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupFilter"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvJournalSubheader"
-                app:singleLine="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipAll"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="@string/all_entries" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipFavorites"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/favorites" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipByMood"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/by_mood" />
-            </com.google.android.material.chip.ChipGroup>
-
-            <!-- Journal entries list -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvJournalEntries"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:clipToPadding="false"
-                android:paddingBottom="80dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/chipGroupFilter"
-                tools:listitem="@layout/item_journal_entry" />
-
-            <!-- Empty state -->
             <LinearLayout
-                android:id="@+id/emptyStateLayout"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="32dp"
-                android:layout_marginEnd="32dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/rvJournalEntries"
-                tools:visibility="visible">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
 
                 <ImageView
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:contentDescription="@string/no_journal_entries_yet"
-                    android:src="@drawable/ic_empty_journal"
-                    app:tint="@color/gray_icon" />
+                    android:id="@+id/previous_day"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_arrow_left"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="4dp"
+                    android:tint="@color/white" />
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:text="@string/no_journal_entries_yet"
-                    android:textColor="@color/black"
-                    android:textSize="18sp" />
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="@string/start_journaling_hint"
-                    android:textColor="@color/gray_text"
-                    android:textSize="14sp" />
+                    <TextView
+                        android:id="@+id/current_date"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today, June 8"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCreateFirstEntry"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/create_first_entry"
-                    app:cornerRadius="24dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="How was your day?"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:alpha="0.9" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/next_day"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@drawable/ic_arrow_right"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="4dp"
+                    android:tint="@color/white" />
+
             </LinearLayout>
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
+            <!-- Mood Selection for Journal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:weightSum="5">
 
-    <!-- FAB for adding new entries -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAddEntry"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
-        android:contentDescription="@string/add_journal_entry"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="@color/primary"
-        app:tint="@color/white" />
+                <LinearLayout
+                    android:id="@+id/journal_mood_happy"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/mood_selector_background">
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="😊"
+                        android:textSize="28dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/journal_mood_normal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/mood_selector_background">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="😐"
+                        android:textSize="28dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/journal_mood_sad"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/mood_selector_background">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="😢"
+                        android:textSize="28dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/journal_mood_anxious"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/mood_selector_background">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="😰"
+                        android:textSize="28dp" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/journal_mood_excited"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="@drawable/mood_selector_background">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🤩"
+                        android:textSize="28dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Journal Entry Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">            <!-- Writing Prompt (Hidden by default) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/card_background"
+                android:backgroundTint="@color/primary_light"
+                android:elevation="2dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/writing_prompt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:text="What are three things you're grateful for today?"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:visibility="gone" />                </LinearLayout>
+
+            <!-- Journal Text Input -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/card_background"
+                android:backgroundTint="@color/surface"
+                android:elevation="2dp"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="How are you feeling today?"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <EditText
+                        android:id="@+id/journal_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:gravity="top|start"
+                        android:hint="Write about your thoughts, feelings, or experiences..."
+                        android:inputType="textMultiLine"
+                        android:background="@null"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="24dp">
+
+                <Button
+                    android:id="@+id/generate_prompt"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Get Prompt"
+                    android:textColor="@color/primary"
+                    android:background="@drawable/button_outline"
+                    style="?android:attr/borderlessButtonStyle" />
+
+                <Button
+                    android:id="@+id/save_entry"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Save Entry"
+                    android:textColor="@color/white"
+                    android:background="@drawable/button_primary" />
+
+            </LinearLayout>
+
+            <!-- Previous Entries -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Previous Entries"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/previous_entries"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    tools:listitem="@layout/item_journal_entry" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

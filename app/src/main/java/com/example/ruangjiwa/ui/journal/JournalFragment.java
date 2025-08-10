@@ -8,252 +8,285 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.ruangjiwa.R;
+import com.example.ruangjiwa.data.SampleDataProvider;
 import com.example.ruangjiwa.data.model.JournalEntry;
 import com.example.ruangjiwa.databinding.FragmentJournalBinding;
-import com.google.android.material.chip.Chip;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Locale;
+import java.util.Random;
 
-public class JournalFragment extends Fragment implements JournalAdapter.JournalItemListener {
+public class JournalFragment extends Fragment {
 
     private FragmentJournalBinding binding;
     private JournalAdapter journalAdapter;
-    private FirebaseFirestore db;
-    private FirebaseAuth mAuth;
-    private String userId;
-    private List<JournalEntry> allEntries = new ArrayList<>();
+    private String selectedMood = "😊";
+    private Date currentDate = new Date();
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE, MMMM dd", Locale.getDefault());
 
-    // Current filter state
-    private boolean showFavoritesOnly = false;
-    private String currentMoodFilter = null;
-
+    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentJournalBinding.inflate(inflater, container, false);
         return binding.getRoot();
-    }
-
-    @Override
+    }    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        setupViews();
+        setupRecyclerView();
+        loadJournalEntries();
+        updateDateDisplay();
+        
+        // Load any existing draft
+        loadDraft();
+    }
 
-        // Initialize Firebase
-        mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
+    private void setupRecyclerView() {
+        journalAdapter = new JournalAdapter(journalEntry -> {
+            Toast.makeText(getContext(), "Opening: " + journalEntry.getTitle(), Toast.LENGTH_SHORT).show();
+            // TODO: Navigate to detailed journal view
+        });
+        
+        binding.previousEntries.setLayoutManager(new LinearLayoutManager(getContext()));
+        binding.previousEntries.setAdapter(journalAdapter);
+    }    private void setupViews() {
+        // Setup date navigation
+        binding.previousDay.setOnClickListener(v -> navigateDay(-1));
+        binding.nextDay.setOnClickListener(v -> navigateDay(1));
 
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            userId = currentUser.getUid();
-            setupUI();
-            loadJournalEntries();
-        } else {
-            // Handle user not logged in
-            showErrorAndNavigateToLogin("Please log in to view your journal");
+        // Setup mood selection
+        setupMoodSelection();
+
+        // Setup journal actions
+        binding.saveEntry.setOnClickListener(v -> saveJournalEntry());
+        binding.generatePrompt.setOnClickListener(v -> generateWritingPrompt());
+
+        // Setup entries list
+        binding.previousEntries.setLayoutManager(new LinearLayoutManager(getContext()));
+        
+        // Setup real-time word count tracking
+        setupWordCountTracking();
+        
+        // Setup auto-save (optional)
+        setupAutoSave();
+    }
+    
+    private void setupWordCountTracking() {
+        binding.journalContent.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                int wordCount = s.toString().trim().isEmpty() ? 0 : s.toString().trim().split("\\s+").length;
+                updateWordCount(wordCount);
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+    
+    private void updateWordCount(int count) {
+        // Update word count display if TextView exists in layout
+        // For now, just update the hint or a toast occasionally
+        if (count > 0 && count % 50 == 0) {
+            Toast.makeText(getContext(), count + " words written", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void setupAutoSave() {
+        // Auto-save draft every 30 seconds if there's content
+        // This is a simple implementation - in production, use WorkManager
+        android.os.Handler autoSaveHandler = new android.os.Handler();
+        Runnable autoSaveRunnable = new Runnable() {
+            @Override
+            public void run() {
+                saveDraft();
+                autoSaveHandler.postDelayed(this, 30000); // 30 seconds
+            }
+        };
+        autoSaveHandler.postDelayed(autoSaveRunnable, 30000);
+    }
+    
+    private void saveDraft() {
+        String content = binding.journalContent.getText().toString().trim();
+        if (!content.isEmpty() && content.length() > 10) {
+            // Save draft to SharedPreferences
+            android.content.SharedPreferences prefs = requireContext()
+                .getSharedPreferences("journal_drafts", android.content.Context.MODE_PRIVATE);
+            prefs.edit()
+                .putString("current_draft", content)
+                .putString("draft_mood", selectedMood)
+                .putLong("draft_timestamp", System.currentTimeMillis())
+                .apply();
+        }
+    }
+    
+    private void loadDraft() {
+        android.content.SharedPreferences prefs = requireContext()
+            .getSharedPreferences("journal_drafts", android.content.Context.MODE_PRIVATE);
+        
+        String draft = prefs.getString("current_draft", "");
+        if (!draft.isEmpty()) {
+            new android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Draft Found")
+                .setMessage("We found an unsaved draft. Would you like to continue writing?")
+                .setPositiveButton("Continue", (dialog, which) -> {
+                    binding.journalContent.setText(draft);
+                    selectedMood = prefs.getString("draft_mood", "😊");
+                    selectMood(selectedMood);
+                })
+                .setNegativeButton("Discard", (dialog, which) -> {
+                    // Clear draft
+                    prefs.edit().clear().apply();
+                })
+                .show();
         }
     }
 
-    private void setupUI() {
-        // Set up RecyclerView
-        journalAdapter = new JournalAdapter(this);
-        binding.rvJournalEntries.setLayoutManager(new LinearLayoutManager(requireContext()));
-        binding.rvJournalEntries.setAdapter(journalAdapter);
+    private void updateDateDisplay() {
+        binding.currentDate.setText(dateFormat.format(currentDate));
+    }    private void setupMoodSelection() {
+        // Reset all mood selections
+        resetMoodSelection();
+        
+        // Set click listeners for mood selection
+        binding.journalMoodHappy.setOnClickListener(v -> selectMood("😊"));
+        binding.journalMoodNormal.setOnClickListener(v -> selectMood("🙂"));
+        binding.journalMoodSad.setOnClickListener(v -> selectMood("😔"));
+        binding.journalMoodAnxious.setOnClickListener(v -> selectMood("😰"));
+        binding.journalMoodExcited.setOnClickListener(v -> selectMood("😄"));
+    }
 
-        // Set up filter chips
-        binding.chipAll.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                showFavoritesOnly = false;
-                currentMoodFilter = null;
-                filterEntries();
-            }
-        });
+    private void selectMood(String mood) {
+        selectedMood = mood;
+        resetMoodSelection();
+        
+        // Highlight selected mood
+        switch (mood) {
+            case "😊":
+                binding.journalMoodHappy.setSelected(true);
+                break;
+            case "🙂":
+                binding.journalMoodNormal.setSelected(true);
+                break;
+            case "😔":
+                binding.journalMoodSad.setSelected(true);
+                break;
+            case "😰":
+                binding.journalMoodAnxious.setSelected(true);
+                break;
+            case "😄":
+                binding.journalMoodExcited.setSelected(true);
+                break;
+        }
+    }
 
-        binding.chipFavorites.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                showFavoritesOnly = true;
-                currentMoodFilter = null;
-                filterEntries();
-            }
-        });
+    private void resetMoodSelection() {
+        binding.journalMoodHappy.setSelected(false);
+        binding.journalMoodNormal.setSelected(false);
+        binding.journalMoodSad.setSelected(false);
+        binding.journalMoodAnxious.setSelected(false);
+        binding.journalMoodExcited.setSelected(false);
+    }    private void navigateDay(int direction) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(currentDate);
+        cal.add(Calendar.DAY_OF_MONTH, direction);
+        currentDate = cal.getTime();
+        updateDateDisplay();
+        // TODO: Load entries for the new date
+    }    private void saveJournalEntry() {
+        String content = binding.journalContent.getText().toString().trim();
+        
+        // Form validation
+        if (!validateJournalEntry(content)) {
+            return;
+        }
+          // Create journal entry
+        JournalEntry newEntry = new JournalEntry(
+            String.valueOf(System.currentTimeMillis()), // ID as String
+            "Journal Entry", // title
+            content, // content
+            selectedMood, // moodEmoji
+            3, // moodLevel (default value)
+            currentDate // date
+        );
+        
+        // In a real app, this would save to database
+        // For now, just show success message
+        Toast.makeText(getContext(), "Journal entry saved successfully!", Toast.LENGTH_SHORT).show();
+        
+        // Clear form
+        clearJournalForm();
+        
+        // Refresh the entries list
+        loadJournalEntries();
+    }
+    
+    private boolean validateJournalEntry(String content) {
+        // Check if content is empty
+        if (content.isEmpty()) {
+            showValidationError("Please write something before saving your journal entry.");
+            binding.journalContent.requestFocus();
+            return false;
+        }
+        
+        // Check minimum length
+        if (content.length() < 10) {
+            showValidationError("Your journal entry should be at least 10 characters long.");
+            binding.journalContent.requestFocus();
+            return false;
+        }
+        
+        // Check maximum length (optional)
+        if (content.length() > 5000) {
+            showValidationError("Your journal entry is too long. Please keep it under 5000 characters.");
+            binding.journalContent.requestFocus();
+            return false;
+        }
+        
+        // Check if mood is selected
+        if (selectedMood == null || selectedMood.isEmpty()) {
+            showValidationError("Please select your mood before saving.");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private void showValidationError(String message) {
+        new android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Validation Error")
+            .setMessage(message)
+            .setPositiveButton("OK", null)
+            .show();
+    }
+    
+    private void clearJournalForm() {
+        binding.journalContent.setText("");
+        binding.writingPrompt.setVisibility(View.GONE);
+        selectedMood = "😊"; // Reset to default mood
+        resetMoodSelection();
+        selectMood(selectedMood);
+        updateWordCount(0);
+    }
 
-        binding.chipByMood.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                showMoodFilterDialog();
-            }
-        });
-
-        // Set up FAB to add new entry
-        binding.fabAddEntry.setOnClickListener(v -> navigateToCreateEntry());
-
-        // Set up empty state button
-        binding.btnCreateFirstEntry.setOnClickListener(v -> navigateToCreateEntry());
+    private void generateWritingPrompt() {
+        String[] prompts = SampleDataProvider.getJournalPrompts();
+        Random random = new Random();
+        int randomIndex = random.nextInt(prompts.length);
+        binding.writingPrompt.setText(prompts[randomIndex]);
+        binding.writingPrompt.setVisibility(View.VISIBLE);
     }
 
     private void loadJournalEntries() {
-        // Show loading state if needed
-
-        // Query Firestore for entries
-        db.collection("users").document(userId).collection("journal_entries")
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        allEntries.clear();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            JournalEntry entry = document.toObject(JournalEntry.class);
-                            allEntries.add(entry);
-                        }
-
-                        // Apply any current filters
-                        filterEntries();
-
-                        // Update UI based on whether we have entries
-                        updateEmptyState();
-                    } else {
-                        Toast.makeText(requireContext(), "Error loading entries", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void filterEntries() {
-        List<JournalEntry> filteredList = new ArrayList<>();
-
-        for (JournalEntry entry : allEntries) {
-            // Apply favorites filter
-            if (showFavoritesOnly && !entry.isFavorite()) {
-                continue;
-            }
-
-            // Apply mood filter
-            if (currentMoodFilter != null && !entry.getMood().equals(currentMoodFilter)) {
-                continue;
-            }
-
-            // Entry passed all filters
-            filteredList.add(entry);
-        }
-
-        // Update the adapter with filtered list
-        journalAdapter.updateData(filteredList);
-
-        // Update empty state
-        updateEmptyState();
-    }
-
-    private void updateEmptyState() {
-        // Add null check for binding to prevent NullPointerException
-        if (binding == null) {
-            return;
-        }
-
-        if (journalAdapter.getItemCount() == 0) {
-            binding.rvJournalEntries.setVisibility(View.GONE);
-            binding.emptyStateLayout.setVisibility(View.VISIBLE);
-        } else {
-            binding.rvJournalEntries.setVisibility(View.VISIBLE);
-            binding.emptyStateLayout.setVisibility(View.GONE);
-        }
-    }
-
-    private void showMoodFilterDialog() {
-        String[] moodOptions = {"Happy", "Neutral", "Sad", "Anxious", "Clear Filter"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Filter by Mood")
-                .setItems(moodOptions, (dialog, which) -> {
-                    // Handle mood filter selection
-                    if (which < 4) {
-                        // Selected a mood filter
-                        currentMoodFilter = moodOptions[which].toLowerCase();
-                        filterEntries();
-                    } else {
-                        // Clear filter (which == 4)
-                        currentMoodFilter = null;
-                        binding.chipAll.setChecked(true);
-                    }
-                })
-                .show();
-    }
-
-    private void navigateToCreateEntry() {
-        // Use the static factory method to create a new entry fragment
-        JournalEntryDetailFragment fragment = JournalEntryDetailFragment.newInstance(true);
-
-        // Replace the current fragment with the detail fragment
-        requireActivity().getSupportFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)
-                .commit();
-    }
-
-    private void showErrorAndNavigateToLogin(String message) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-        // In a real app, navigate to login screen
-    }
-
-    // JournalAdapter.JournalItemListener interface implementations
-    @Override
-    public void onEntryClick(JournalEntry entry) {
-        // In a real app, navigate to view the full entry
-        Toast.makeText(requireContext(), "Viewing: " + entry.getTitle(), Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onFavoriteToggle(JournalEntry entry, boolean isFavorite) {
-        // Update favorite status in Firestore
-        db.collection("users").document(userId)
-                .collection("journal_entries").document(entry.getId())
-                .update("favorite", isFavorite)
-                .addOnSuccessListener(aVoid -> {
-                    // Update successful
-                    String message = isFavorite ? "Added to favorites" : "Removed from favorites";
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    // Update failed
-                    Toast.makeText(requireContext(), "Failed to update favorite status", Toast.LENGTH_SHORT).show();
-                });
-    }
-
-    @Override
-    public void onDeleteClick(JournalEntry entry) {
-        // Show confirmation dialog
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Journal Entry")
-                .setMessage("Are you sure you want to delete this entry?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    // Delete from Firestore
-                    db.collection("users").document(userId)
-                            .collection("journal_entries").document(entry.getId())
-                            .delete()
-                            .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(requireContext(), "Entry deleted", Toast.LENGTH_SHORT).show();
-                                // Remove from our local list and update UI
-                                allEntries.remove(entry);
-                                filterEntries();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(requireContext(), "Failed to delete entry", Toast.LENGTH_SHORT).show();
-                            });
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        journalAdapter.setJournalEntries(SampleDataProvider.getSampleJournalEntries());
     }
 
     @Override

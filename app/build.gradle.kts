@@ -1,8 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-
-    // Add the Google services Gradle plugin
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -58,24 +55,12 @@ dependencies {
     // CardView - using Material Components instead of legacy CardView
     implementation("com.google.android.material:material:1.10.0")
     
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-firestore:24.10.3")
-    implementation("com.google.firebase:firebase-storage")
-
-    // Glide for image loading
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
-
-    // Gson for JSON serialization/deserialization
-    implementation("com.google.code.gson:gson:2.10.1")
-
-    // Charts library
-    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
-
+    // Charts library - commented out temporarily to debug build issues
+    // implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    
+    // Remove calendar library for now
+    // implementation("com.github.prolificinteractive:material-calendarview:2.0.1")
+    
     // Media Player
     implementation("androidx.media:media:1.7.0")
     
