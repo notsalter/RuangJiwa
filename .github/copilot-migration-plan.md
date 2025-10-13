@@ -172,20 +172,20 @@ Data layer skeleton:
 - Builds run green on CI; beta testers complete predefined scenarios without blockers.
 
 ## Work Backlog Checklist
-- [ ] Decide Expo vs bare RN; spike notifications feasibility.
-- [ ] Create RN repo; baseline navigation, theme, lint, TS config.
-- [ ] Firebase init (Auth/Firestore/Storage); environment handling (.env, app.json/app.config.js).
-- [ ] Models/types scaffolding; adapters from Firestore.
-- [ ] Home screens and widgets.
-- [ ] Psychologists list/detail + images.
-- [ ] Consultation create/list/detail.
-- [ ] Quiz engine + results + history.
-- [ ] Mood entry + history + charts.
-- [ ] Journaling CRUD.
-- [ ] Recommendations computation and display.
-- [ ] Profile view/edit + avatar upload.
-- [ ] Notifications mapping and schedules.
-- [ ] Localization files (ID, EN) and wiring.
+- [x] Decide Expo vs bare RN; spike notifications feasibility.
+- [x] Create RN repo; baseline navigation, theme, lint, TS config.
+- [x] Firebase init (Auth/Firestore/Storage); environment handling (.env, app.json/app.config.js).
+- [x] Models/types scaffolding; adapters from Firestore.
+- [x] Home screens and widgets.
+- [x] Psychologists list/detail + images.
+- [x] Consultation create/list/detail.
+- [x] Quiz engine + results + history.
+- [x] Mood entry + history + charts.
+- [x] Journaling CRUD.
+- [x] Recommendations computation and display.
+- [x] Profile view/edit + avatar upload.
+- [x] Notifications mapping and schedules.
+- [x] Localization files (ID, EN) and wiring.
 - [ ] Tests (unit, component), emulator-based sanity checks.
 - [ ] CI/CD wiring and beta distribution.
 

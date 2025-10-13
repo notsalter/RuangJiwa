@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/screens/*": [
+        "src/screens/*"
+      ],
+      "@/navigation/*": [
+        "src/navigation/*"
+      ],
+      "@/services/*": [
+        "src/services/*"
+      ],
+      "@/hooks/*": [
+        "src/hooks/*"
+      ],
+      "@/i18n/*": [
+        "src/i18n/*"
+      ],
+      "@/store/*": [
+        "src/store/*"
+      ],
+      "@/data/*": [
+        "src/data/*"
+      ],
+      "@/models/*": [
+        "src/models/*"
+      ]
+    },
+    "types": [
+      "react",
+      "react-native"
+    ],
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
+}
