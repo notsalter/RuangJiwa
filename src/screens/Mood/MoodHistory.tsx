@@ -30,7 +30,7 @@ function ChartSection({ points }: { points: Array<{ x: number; y: number }> }) {
 
 function HistoryItem({ item }: { item: any }) {
   const created = new Date(item.createdAt);
-  const name = item.mood?.replace('_', ' ') || 'neutral';
+  const name = item.mood?.replaceAll('_', ' ') || 'neutral';
   return (
     <Card style={{ marginBottom: 10 }}>
       <Card.Title title={`${moodEmoji[item.mood] || '😐'}  ${name}`} subtitle={created.toLocaleString()} />

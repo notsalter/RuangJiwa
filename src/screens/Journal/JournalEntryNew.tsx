@@ -24,7 +24,7 @@ export default function JournalEntryNew({ navigation }: any) {
   const [mood, setMood] = React.useState<'very_sad' | 'sad' | 'neutral' | 'happy' | 'very_happy'>('neutral');
 
   const createMutation = useMutation<JournalEntry, Error, Omit<JournalEntry, 'id'>>({
-  mutationFn: (payload: Omit<JournalEntry, 'id'>) => Journals.create(payload),
+    mutationFn: (payload: Omit<JournalEntry, 'id'>) => Journals.create(payload),
     onSuccess: () => {
       if (userId) {
         queryClient.invalidateQueries({ queryKey: ['journals', userId] });

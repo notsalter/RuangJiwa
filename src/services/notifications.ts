@@ -26,9 +26,9 @@ export async function scheduleMoodReminder(hour = 20, minute = 0) {
       title: 'Mood Check-in',
       body: 'Bagaimana perasaanmu hari ini?',
     },
+    // @ts-ignore: expo-notifications trigger typing
     trigger: {
       hour, minute, repeats: true,
-      // @ts-ignore: expo-notifications typing
       channelId: 'mood-reminders'
     },
   });
@@ -40,6 +40,7 @@ export async function scheduleConsultationReminder(date: Date, title: string) {
       title: 'Pengingat Konsultasi',
       body: title,
     },
+    // @ts-ignore: expo-notifications trigger typing
     trigger: date,
   });
 }

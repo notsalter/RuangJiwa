@@ -6,8 +6,7 @@ import { useConsultations } from '@/hooks/queries/useConsultations';
 import { useMoodHistory } from '@/hooks/queries/useMoodHistory';
 import { useRecommendations } from '@/hooks/queries/useRecommendations';
 import { usePsychologists } from '@/hooks/queries/usePsychologists';
-import type { RecommendationItem, Psychologist } from '@/models/types';
-import type { Consultation } from '@/services/collections/consultations';
+import type { RecommendationItem, Psychologist, Consultation } from '@/models/types';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -66,7 +65,7 @@ export default function Home({ navigation }: any) {
     if (!nextConsultation || !psychologists) {
       return undefined;
     }
-  const match = (psychologists as Psychologist[] | undefined)?.find((item: Psychologist) => item.id === nextConsultation.psychologistId);
+    const match = (psychologists as Psychologist[] | undefined)?.find((item: Psychologist) => item.id === nextConsultation.psychologistId);
     return match?.name;
   }, [nextConsultation, psychologists]);
 

@@ -14,7 +14,7 @@ export default function SignIn({ navigation }: any) {
       <TextInput label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" style={{ marginVertical: 8 }} />
       <TextInput label="Password" value={password} onChangeText={setPassword} secureTextEntry style={{ marginVertical: 8 }} />
       {error ? <Text style={{ color: 'red', marginBottom: 8 }}>{error}</Text> : null}
-  <Button mode="contained" loading={loading} disabled={loading} onPress={async () => {
+      <Button mode="contained" loading={loading} disabled={loading} onPress={async () => {
         setError(undefined);
         setLoading(true);
         try {
@@ -27,7 +27,7 @@ export default function SignIn({ navigation }: any) {
       }}>
         Sign In
       </Button>
-  <Button style={{ marginTop: 8 }} onPress={() => navigation.navigate('Register')}>Belum punya akun? Daftar</Button>
+      <Button style={{ marginTop: 8 }} onPress={() => navigation.navigate('Register')}>Belum punya akun? Daftar</Button>
     </View>
   );
 }

@@ -83,7 +83,7 @@ export default function QuizTake({ route, navigation }: any) {
       return;
     }
 
-  const allAnswered = answers.every((value: number) => value >= 0);
+    const allAnswered = answers.every((value: number) => value >= 0);
     if (!allAnswered) {
       Alert.alert('Lengkapi Jawaban', 'Jawab semua pertanyaan sebelum mengirim.');
       return;
@@ -143,7 +143,7 @@ export default function QuizTake({ route, navigation }: any) {
         </Card.Content>
       </Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>
-        <Button mode="outlined" onPress={goBack} disabled={currentIndex === 0 || saving}>
+        <Button mode="outlined" onPress={goBack} disabled={saving}>
           Kembali
         </Button>
         <Button mode="contained" onPress={goForward} loading={saving} disabled={saving}>

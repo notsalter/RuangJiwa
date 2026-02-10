@@ -1,14 +1,6 @@
 import { db } from '@/services/firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where } from 'firebase/firestore';
-
-export interface Consultation {
-  id?: string;
-  userId: string;
-  psychologistId: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'canceled';
-  scheduledAt?: string;
-  notes?: string;
-}
+import type { Consultation } from '@/models/types';
 
 const col = collection(db, 'consultations');
 
@@ -18,9 +10,8 @@ export async function listForUser(userId: string) {
   return snap.docs.map((d: any) => ({ id: d.id, ...d.data() })) as Consultation[];
 }
 
-export async function create(data: Consultation) {
-  const { id, ...payload } = data;
-  const ref = await addDoc(col, payload);
+export async function create(data: Omit<Consultation, 'id'>) {
+  const ref = await addDoc(col, data as any);
   const snap = await getDoc(doc(db, 'consultations', ref.id));
   return { id: ref.id, ...snap.data() } as Consultation;
 }

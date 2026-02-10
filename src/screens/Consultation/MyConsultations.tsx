@@ -30,7 +30,7 @@ export default function MyConsultations() {
           keyExtractor={(item: any, index) => item.id ?? String(index)}
           renderItem={({ item }: { item: any }) => (
             <Card style={{ marginBottom: 10 }}>
-              <Card.Title title={`Status: ${item.status}`} subtitle={new Date(item.scheduledAt).toLocaleString()} />
+              <Card.Title title={`Status: ${item.status}`} subtitle={item.scheduledAt ? new Date(item.scheduledAt).toLocaleString() : 'Belum dijadwalkan'} />
               <Card.Content>
                 {item.notes ? <Text>{item.notes}</Text> : null}
               </Card.Content>

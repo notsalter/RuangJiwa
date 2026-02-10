@@ -21,9 +21,9 @@ export default function ProfileHome({ navigation }: ProfileHomeProps) {
     if (name && name.trim().length > 0) {
       return name
         .split(' ')
-  .filter((part: string) => part.length > 0)
-  .slice(0, 2)
-  .map((part: string) => part[0])
+        .filter((part: string) => part.length > 0)
+        .slice(0, 2)
+        .map((part: string) => part[0])
         .join('')
         .toUpperCase();
     }

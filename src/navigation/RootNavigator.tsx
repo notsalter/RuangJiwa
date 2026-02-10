@@ -104,19 +104,19 @@ function MainTabs() {
       <Tabs.Screen
         name="Consultation"
         component={ConsultationStackNavigator}
-        options={{ title: t('consultation.title') }}
+        options={{ title: t('consultation.title'), headerShown: false }}
       />
       <Tabs.Screen
         name="Journal"
         component={JournalStackNavigator}
-        options={{ title: t('journal.title', { defaultValue: 'Journal' }) }}
+        options={{ title: t('journal.title', { defaultValue: 'Journal' }), headerShown: false }}
       />
       <Tabs.Screen
         name="Mood"
         component={MoodStackNavigator}
-        options={{ title: t('mood.title') }}
+        options={{ title: t('mood.title'), headerShown: false }}
       />
-      <Tabs.Screen name="Profile" component={ProfileStackNavigator} options={{ title: t('profile.title') }} />
+      <Tabs.Screen name="Profile" component={ProfileStackNavigator} options={{ title: t('profile.title'), headerShown: false }} />
     </Tabs.Navigator>
   );
 }
