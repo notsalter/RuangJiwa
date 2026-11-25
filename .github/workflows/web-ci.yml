@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Dependency compatibility tests
+        run: npm run test:dependencies
+
       - name: Build PWA
         run: npm run build
 
