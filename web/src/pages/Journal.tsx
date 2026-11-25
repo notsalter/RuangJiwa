@@ -15,6 +15,7 @@ import {
   QueryFeedback,
   dateLabel,
 } from "../ui/shared";
+import { formLimits, journalFormError } from "../ui/forms";
 const blank: JournalDraft = {
   title: "",
   content: "",
@@ -51,10 +52,9 @@ export function JournalPage({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (draft.content.trim().length < 10) {
-            setValidation(
-              "Isi jurnal minimal 10 karakter setelah spasi tepi dihapus.",
-            );
+          const error = journalFormError(draft);
+          if (error) {
+            setValidation(error);
             return;
           }
           void action.run(async () => {
@@ -78,7 +78,7 @@ export function JournalPage({
         <Field label="Judul (opsional)">
           <input
             value={draft.title}
-            maxLength={200}
+            maxLength={formLimits.journalTitle}
             onInput={(e) => change("title", e.currentTarget.value)}
           />
         </Field>
@@ -111,7 +111,7 @@ export function JournalPage({
           <textarea
             required
             minLength={10}
-            maxLength={50000}
+            maxLength={formLimits.journalContent}
             value={draft.content}
             onInput={(e) => change("content", e.currentTarget.value)}
           />
@@ -132,10 +132,11 @@ export function JournalPage({
         <Field label="Tag (pisahkan dengan koma)">
           <input
             value={draft.tags}
-            maxLength={500}
+            maxLength={formLimits.journalTagsInput}
             onInput={(e) => change("tags", e.currentTarget.value)}
           />
         </Field>
+        <p>Maksimal 10 tag, masing-masing 40 karakter.</p>
         <label class="choice">
           <input
             type="checkbox"
