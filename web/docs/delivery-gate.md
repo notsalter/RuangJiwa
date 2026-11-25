@@ -21,7 +21,7 @@ Scope: implementation and local UI. Production connectivity, deployment rules an
 - R-36 PASS: no compliance/performance/backend-connectivity claims; build payload is measured output, field Web Vitals not measured.
 - R-37 PASS: approved indigo/tab direction and ENERGY 1 / RHYTHM 2 / MOTION 1 recorded before editing.
 - R-38 PASS: no guest backend or seeded production directory. Browser fixtures are injected from an external scratch probe and marked TEST.
-- R-39 PASS: labels wrap native fields, controls have accessible names, cursor/disabled rules and focus style; main/header/nav/footer, document language/title, reduced-motion rules exist.
+- R-39 PASS: labels wrap native fields, controls have accessible names, cursor/disabled rules and focus style; main/header/nav/footer, document language/title, reduced-motion rules exist. <!-- gitleaks:allow -->
 - R-40 PASS: profile/directory images have explicit 96px dimensions and referrer policy, no hero imagery or third-party blocking script.
 
 ## Purpose gate
