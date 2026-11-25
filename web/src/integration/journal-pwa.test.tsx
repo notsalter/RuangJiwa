@@ -43,29 +43,93 @@ function setup() {
   return { session, postMessage, ...view };
 }
 it("asks before routing away or logging out, preserving the actual draft when rejected and clearing after consent", async () => {
-  const { postMessage } = setup();
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-  fireEvent.click(await screen.findByRole("link", { name: "Jurnal" }));
-  fireEvent.input(screen.getByLabelText("Isi jurnal"), {
-    target: { value: "Draft yang belum tersimpan" },
-  });
-  fireEvent.click(screen.getByRole("link", { name: "Mood" }));
-  expect(confirm).toHaveBeenCalledTimes(1);
-  expect(location.pathname).toBe("/journal");
-  expect(
-    (screen.getByLabelText("Isi jurnal") as HTMLTextAreaElement).value,
-  ).toBe("Draft yang belum tersimpan");
-  window.history.replaceState({}, "", "/profile");
-  fireEvent(window, new PopStateEvent("popstate"));
-  expect(location.pathname).toBe("/journal");
-  fireEvent.click(screen.getByRole("button", { name: "Keluar" }));
-  expect(screen.queryByRole("button", { name: "Masuk" })).toBeNull();
-  confirm.mockReturnValue(true);
+  history.replaceState({ unrelated: "retained" }, "", "/");
+  const { session, postMessage } = setup();
+  const logout = vi.spyOn(session, "logout");
+  await screen.findByRole("heading", { name: "Apa kabar hari ini?" });
+  const homeState = history.state;
   fireEvent.click(screen.getByRole("link", { name: "Mood" }));
   await screen.findByRole("heading", { name: "Catat mood" });
+  const moodState = history.state;
+  fireEvent.click(screen.getByRole("link", { name: "Jurnal" }));
+  await screen.findByRole("heading", { name: "Tulis jurnal" });
+  const journalState = history.state;
+  fireEvent.click(screen.getByRole("link", { name: "Profil" }));
+  await screen.findByRole("heading", { name: "Profil saya" });
+  const profileState = history.state;
+  history.back();
+  await screen.findByRole("heading", { name: "Tulis jurnal" });
+  const length = history.length;
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   const update = await screen.findByRole("button", {
     name: "Perbarui dan muat ulang",
   });
+  fireEvent.input(screen.getByLabelText("Isi jurnal"), {
+    target: { value: "Draft yang belum tersimpan" },
+  });
+  const expectProtectedDraft = () => {
+    expect(location.pathname).toBe("/journal");
+    expect(history.state).toEqual(journalState);
+    expect(history.length).toBe(length);
+    expect(
+      (screen.getByLabelText("Isi jurnal") as HTMLTextAreaElement).value,
+    ).toBe("Draft yang belum tersimpan");
+    expect(update.hasAttribute("disabled")).toBe(true);
+    fireEvent.click(update);
+    expect(postMessage).not.toHaveBeenCalled();
+  };
+  fireEvent.click(screen.getByRole("link", { name: "Mood" }));
+  expect(confirm).toHaveBeenCalledTimes(1);
+  expectProtectedDraft();
+  history.back();
+  await waitFor(() => expect(confirm).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(location.pathname).toBe("/journal"));
+  expectProtectedDraft();
+  fireEvent.click(screen.getByRole("button", { name: "Keluar" }));
+  expect(confirm).toHaveBeenCalledTimes(3);
+  expect(logout).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: "Masuk" })).toBeNull();
+  expectProtectedDraft();
+  confirm.mockReturnValue(true);
+  history.back();
+  await waitFor(() => expect(location.pathname).toBe("/mood"));
+  await screen.findByRole("heading", { name: "Catat mood" });
+  expect(confirm).toHaveBeenCalledTimes(4);
+  expect(history.state).toEqual(moodState);
+  expect(update.hasAttribute("disabled")).toBe(false);
+  history.forward();
+  await screen.findByRole("heading", { name: "Tulis jurnal" });
+  expect(history.state).toEqual(journalState);
+  expect((screen.getByLabelText("Isi jurnal") as HTMLTextAreaElement).value).toBe("");
+  history.forward();
+  await screen.findByRole("heading", { name: "Profil saya" });
+  expect(history.state).toEqual(profileState);
+  history.go(-3);
+  await screen.findByRole("heading", { name: "Apa kabar hari ini?" });
+  expect(history.state).toEqual(homeState);
+  expect(history.state.unrelated).toBe("retained");
+  expect(history.length).toBe(length);
+  history.go(2);
+  await screen.findByRole("heading", { name: "Tulis jurnal" });
+  fireEvent.input(screen.getByLabelText("Isi jurnal"), {
+    target: { value: "Draft sebelum pindah halaman" },
+  });
+  fireEvent.click(screen.getByRole("link", { name: "Mood" }));
+  await screen.findByRole("heading", { name: "Catat mood" });
+  expect(confirm).toHaveBeenCalledTimes(5);
+  expect(update.hasAttribute("disabled")).toBe(false);
+  fireEvent.click(screen.getByRole("link", { name: "Jurnal" }));
+  await screen.findByRole("heading", { name: "Tulis jurnal" });
+  expect((screen.getByLabelText("Isi jurnal") as HTMLTextAreaElement).value).toBe("");
+  fireEvent.input(screen.getByLabelText("Isi jurnal"), {
+    target: { value: "Draft sebelum keluar" },
+  });
+  expect(update.hasAttribute("disabled")).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: "Keluar" }));
+  await screen.findByRole("button", { name: "Masuk" });
+  expect(confirm).toHaveBeenCalledTimes(6);
+  expect(logout).toHaveBeenCalledTimes(1);
+  expect(screen.queryByLabelText("Isi jurnal")).toBeNull();
   expect(update.hasAttribute("disabled")).toBe(false);
   expect(postMessage).not.toHaveBeenCalled();
 });
