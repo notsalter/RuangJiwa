@@ -1,7 +1,8 @@
 import { assertWritableCollection, createRecord, updateRecord, validRecord } from "./validation";
 import { decodeRecord } from "./records";
 import { emulatorEnabled } from "./emulators";
-import { firebaseConfig, safePhotoUrl } from "../core/config";
+import { firebaseConfig } from "../core/config";
+import { ownedAvatarPath, legacyAvatarPath, validAvatar, MAX_AVATAR_BYTES, AvatarSaveError } from "./avatar";
 import type { Backend, Collections } from "../core/types";
 export function createBackend(env: Record<string, unknown>): Backend | null {
   const config = firebaseConfig(env);
@@ -25,6 +26,30 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
     return { app, authSdk, auth, store, db };
   }
   const client = () => (pending ??= connect());
+  let photoClient: Promise<{ sdk: typeof import("firebase/storage"); bucket: import("firebase/storage").FirebaseStorage }> | undefined;
+  const imageClient = () => (photoClient ??= (async () => {
+    const c = await client();
+    const sdk = await import("firebase/storage");
+    const bucket = sdk.getStorage(c.app);
+    if (emulatorEnabled(env)) sdk.connectStorageEmulator(bucket, "127.0.0.1", 9199);
+    return { sdk, bucket };
+  })());
+  async function readPhoto(uid: string, path: string) {
+    if (!ownedAvatarPath(uid, path)) throw new Error("invalid-photo-path");
+    const c = await client();
+    assertOwner(c.auth, uid);
+    const { sdk, bucket } = await imageClient();
+    assertOwner(c.auth, uid);
+    const ref = sdk.ref(bucket, path);
+    const metadata = await sdk.getMetadata(ref);
+    assertOwner(c.auth, uid);
+    if (!validAvatar({type: metadata.contentType ?? "", size: metadata.size})) throw new Error("invalid-photo");
+    const blob = await sdk.getBlob(ref, MAX_AVATAR_BYTES);
+    assertOwner(c.auth, uid);
+    if (blob.size !== metadata.size || (blob.type && blob.type !== metadata.contentType)) throw new Error("invalid-photo");
+    // Firebase's bounded getBlob slices away MIME; restore only authenticated metadata's allowlisted type.
+    return blob.slice(0, blob.size, metadata.contentType);
+  }
   const assertOwner = (
     auth: { currentUser: { uid: string } | null },
     uid: string,
@@ -87,68 +112,65 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
             ? data.name
             : (c.auth.currentUser?.displayName ?? undefined),
         email: c.auth.currentUser?.email ?? undefined,
-        photoUrl: safePhotoUrl(
-          typeof data.profileImageUrl === "string"
-            ? data.profileImageUrl
-            : typeof data.photoUrl === "string"
-              ? data.photoUrl
-              : (c.auth.currentUser?.photoURL ?? undefined),
-        ),
+        profileImagePath: "profileImagePath" in data
+          ? ownedAvatarPath(uid, data.profileImagePath)
+          : [data.profileImageUrl, data.photoUrl, c.auth.currentUser?.photoURL]
+              .map(value => legacyAvatarPath(uid, value, config!.storageBucket, emulatorEnabled(env)))
+              .find(path => path !== undefined),
       };
     },
+    getPhoto: readPhoto,
     async saveProfile(uid, name, photo) {
       const c = await client();
       assertOwner(c.auth, uid);
-      const updates: { displayName: string; photoURL?: string } = {
-        displayName: name.trim(),
-      };
-      if (!updates.displayName || updates.displayName.length > 100)
-        throw new Error("invalid-name");
-      if (photo) {
-        if (
-          !["image/jpeg", "image/png", "image/webp"].includes(photo.type) ||
-          photo.size > 5 * 1024 * 1024
-        )
-          throw new Error("invalid-photo");
-        const storage = await import("firebase/storage");
+      const displayName = name.trim();
+      if (!displayName || displayName.length > 100) throw new Error("invalid-name");
+      if (photo && !validAvatar(photo)) throw new Error("invalid-photo");
+      let imagePath: string | undefined;
+      let mutationStarted = false;
+      try {
+        if (photo) {
+          imagePath = `profile_images/${uid}/${crypto.randomUUID()}`;
+          if (!ownedAvatarPath(uid, imagePath)) throw new Error("invalid-photo-path");
+          const { sdk, bucket } = await imageClient();
+          assertOwner(c.auth, uid);
+          mutationStarted = true;
+          await sdk.uploadBytes(sdk.ref(bucket, imagePath), photo, { contentType: photo.type });
+          const uploaded = await readPhoto(uid, imagePath);
+          const originalBytes = new Uint8Array(await photo.arrayBuffer());
+          const storedBytes = new Uint8Array(await uploaded.arrayBuffer());
+          if (uploaded.size !== photo.size || uploaded.type !== photo.type
+            || !storedBytes.every((byte, i) => byte === originalBytes[i]))
+            throw new Error("photo-not-verified");
+        }
         assertOwner(c.auth, uid);
-        const bucket = storage.getStorage(c.app);
-        if (emulatorEnabled(env))
-          storage.connectStorageEmulator(bucket, "127.0.0.1", 9199);
-        const ref = storage.ref(
-          bucket,
-          `profile_images/${uid}/${crypto.randomUUID()}`,
-        );
-        await storage.uploadBytes(ref, photo, { contentType: photo.type });
+        mutationStarted = true;
+        await c.authSdk.updateProfile(c.auth.currentUser!, { displayName, ...(photo && c.auth.currentUser?.photoURL ? { photoURL: "" } : {}) });
         assertOwner(c.auth, uid);
-        updates.photoURL = safePhotoUrl(
-          await storage.getDownloadURL(ref),
-          emulatorEnabled(env),
-        );
+        const payload = {
+          name: displayName,
+          ...(imagePath ? {
+            profileImagePath: imagePath,
+            profileImageUrl: c.store.deleteField(),
+            photoUrl: c.store.deleteField(),
+          } : {}),
+        };
+        const ref = c.store.doc(c.db, "users", uid);
+        await c.store.setDoc(ref, payload, { merge: true });
         assertOwner(c.auth, uid);
-        if (!updates.photoURL) throw new Error("invalid-photo-url");
+        const saved = await c.store.getDoc(ref);
+        assertOwner(c.auth, uid);
+        if (!saved.exists() || saved.data().name !== displayName
+          || c.auth.currentUser?.displayName !== displayName
+          || (imagePath && (saved.data().profileImagePath !== imagePath
+            || Object.hasOwn(saved.data(), "profileImageUrl") || Object.hasOwn(saved.data(), "photoUrl")
+            || Boolean(c.auth.currentUser?.photoURL))))
+          throw new Error("profile-not-verified");
+      } catch (error) {
+        if (photo && mutationStarted)
+          throw new AvatarSaveError(error);
+        throw error;
       }
-      assertOwner(c.auth, uid);
-      await c.authSdk.updateProfile(c.auth.currentUser!, updates);
-      assertOwner(c.auth, uid);
-      const payload = {
-        name: updates.displayName,
-        ...(updates.photoURL ? { profileImageUrl: updates.photoURL } : {}),
-      };
-      const ref = c.store.doc(c.db, "users", uid);
-      await c.store.setDoc(ref, payload, { merge: true });
-      assertOwner(c.auth, uid);
-      const saved = await c.store.getDoc(ref);
-      assertOwner(c.auth, uid);
-      if (
-        !saved.exists() ||
-        Object.entries(payload).some(
-          ([key, value]) => saved.data()[key] !== value,
-        ) ||
-        c.auth.currentUser?.displayName !== updates.displayName ||
-        (updates.photoURL && c.auth.currentUser?.photoURL !== updates.photoURL)
-      )
-        throw new Error("profile-not-verified");
     },
     async list(name, uid) {
       const c = await client();

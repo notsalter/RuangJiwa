@@ -10,6 +10,7 @@ export interface Profile {
   name?: string;
   email?: string;
   photoUrl?: string;
+  profileImagePath?: string;
 }
 export interface MoodEntry {
   id: string;
@@ -72,6 +73,7 @@ export interface Backend {
   resetPassword(email: string): Promise<void>;
   profile(uid: string): Promise<Profile | null>;
   saveProfile(uid: string, name: string, photo?: File): Promise<void>;
+  getPhoto?(uid: string, path: string): Promise<Blob>;
   list<K extends Collection>(name: K, uid: string): Promise<Collections[K][]>;
   create(
     name: PrivateCollection,
