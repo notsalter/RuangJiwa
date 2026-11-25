@@ -22,6 +22,13 @@ vi.mock("firebase/firestore/lite", () => ({
   getDoc: async () => ({ exists: () => true, data: () => boundary.record }),
   setDoc: boundary.set,
 }));
+it("returns an owned image path instead of a durable bearer URL", async () => {
+  boundary.record = { name: "Old", profileImagePath: "profile_images/a/avatar.png", profileImageUrl: "https://example.test/legacy" };
+  const profile = await createBackend(env)!.profile("a");
+  expect(profile).toMatchObject({ profileImagePath: "profile_images/a/avatar.png" });
+  expect(profile?.photoUrl).toBeUndefined();
+  boundary.record = { name: "Old" };
+});
 const env = Object.fromEntries(
   ["API_KEY", "AUTH_DOMAIN", "PROJECT_ID", "STORAGE_BUCKET", "APP_ID"].map(
     (k) => ["VITE_FIREBASE_" + k, "test-identifier"],

@@ -329,9 +329,17 @@ test('responsive private routes at 320 375 768 1280 have no horizontal overflow'
   await page.setViewportSize({ width: 1280, height: 900 });
 }, { timeout: 120000 });
 
-test('profile photo DOM save must persist matching Storage Auth Firestore URL', async () => {
+test('profile photo DOM save persists owned authenticated path and ephemeral blob (accepted client-only contract)', async () => {
+  const legacyUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${encodeURIComponent(`profile_images/${owners[0].uid}/legacy`)}?alt=media&token=test-only-old-link`;
+  await authSdk.updateProfile(owner1.auth.currentUser, {photoURL: legacyUrl});
+  await testEnv.withSecurityRulesDisabled(c => adminStore.setDoc(adminStore.doc(c.firestore(), 'users', owners[0].uid), {profileImageUrl: legacyUrl, photoUrl: legacyUrl}, {merge:true}));
   await route('/profile', 'Profil saya');
   await page.getByLabel('Nama profil').fill('OWNER1 PRIVATE PROFILE E2E');
+  await page.getByRole('button', {name:'Simpan profil', exact:true}).click();
+  await success('Profil tersimpan.');
+  await authSdk.reload(owner1.auth.currentUser);
+  assert.equal(owner1.auth.currentUser.photoURL, legacyUrl, 'Name-only save does not consent to old URL deletion');
+  assert.equal((await adminRead('users', owners[0].uid)).profileImageUrl, legacyUrl);
   await page.getByLabel('Foto profil (opsional)').setInputFiles({ name: 'test-only-pixel.png', mimeType: 'image/png', buffer: png });
   await page.getByRole('button', { name: 'Simpan profil', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Simpan profil', exact: true })).toBeEnabled({ timeout: 20000 });
@@ -343,9 +351,51 @@ test('profile photo DOM save must persist matching Storage Auth Firestore URL', 
   assert.equal(objects.length, 1, 'UI uploadBytes must persist one photo');
   records.photo = objects[0].fullPath;
   await success('Profil tersimpan.');
-  assert.equal(profile.profileImageUrl, owner1.auth.currentUser.photoURL);
-  await expect(page.getByRole('img', { name: 'Foto profil saya' })).toBeVisible();
-  assert(await page.getByRole('img', { name: 'Foto profil saya' }).evaluate(img => img.complete && img.naturalWidth > 0));
+  assert.equal(profile.profileImagePath, records.photo);
+  assert(!Object.hasOwn(profile, 'profileImageUrl')); assert(!Object.hasOwn(profile, 'photoUrl'));
+  assert.equal(owner1.auth.currentUser.photoURL, null);
+  const persisted = await store.getDoc(store.doc(owner1.db, 'users', owners[0].uid));
+  assert.equal(persisted.data().profileImagePath, records.photo);
+  const img = page.getByRole('img', { name: 'Foto profil saya' });
+  await expect(img).toBeVisible();
+  await expect(img).toHaveAttribute('src', /^blob:/);
+  assert(await img.evaluate(img => img.complete && img.naturalWidth > 0));
+  assert.deepEqual(Buffer.from(await storage.getBytes(storage.ref(owner1.bucket, records.photo))), png);
+  await page.evaluate(() => {
+    window.avatarRevoked = [];
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.revokeObjectURL = url => { window.avatarRevoked.push(url); revoke(url); };
+  });
+  const oldBlob = await img.getAttribute('src');
+  await page.getByLabel('Foto profil (opsional)').setInputFiles({ name: 'replacement.png', mimeType: 'image/png', buffer: png });
+  await page.getByRole('button', { name: 'Simpan profil', exact: true }).click();
+  await success('Profil tersimpan.');
+  await expect(img).toHaveAttribute('src', /^blob:/);
+  await expect.poll(() => img.getAttribute('src')).not.toBe(oldBlob);
+  assert((await page.evaluate(() => window.avatarRevoked)).includes(oldBlob));
+  const second = await store.getDoc(store.doc(owner1.db, 'users', owners[0].uid));
+  assert.notEqual(second.data().profileImagePath, records.photo);
+  records.photo = second.data().profileImagePath;
+  assert(!Object.hasOwn(second.data(), 'profileImageUrl')); assert(!Object.hasOwn(second.data(), 'photoUrl'));
+  await authSdk.reload(owner1.auth.currentUser); assert.equal(owner1.auth.currentUser.photoURL, null);
+  const secondBlob = await img.getAttribute('src');
+  await context.setOffline(true);
+  await expect(page.getByRole('heading', { name: 'Kamu sedang offline' })).toBeVisible();
+  await expect(img).toHaveCount(0);
+  assert((await page.evaluate(() => window.avatarRevoked)).includes(secondBlob));
+  await context.setOffline(false);
+  await expect(img).toHaveAttribute('src', /^blob:/);
+  const logoutBlob = await img.getAttribute('src');
+  await logout();
+  assert((await page.evaluate(() => window.avatarRevoked)).includes(logoutBlob));
+  await expect(img).toHaveCount(0);
+  await authUI(owners[1]);
+  await route('/profile', 'Profil saya'); await expect(img).toHaveCount(0);
+  await logout(); await authUI(owners[0]); await route('/profile', 'Profil saya');
+  await expect(img).toHaveAttribute('src', /^blob:/);
+  const caches = await page.evaluate(async () => (await Promise.all((await window.caches.keys()).map(async k => (await (await window.caches.open(k)).keys()).map(r => r.url)))).flat());
+  assert(caches.every(url => !url.includes(':9199') && !url.includes('token=') && !url.startsWith('blob:')));
+  note('Authenticated avatar contract and lifecycle', { ownedPath: records.photo, authPhotoURL: owner1.auth.currentUser.photoURL, noDurableURLs: true, replacementOfflineLogoutDisposed: true });
 });
 
 test('Storage owner gets and crossuser unauthenticated gets writes denied', async () => {
@@ -361,10 +411,17 @@ test('Storage owner gets and crossuser unauthenticated gets writes denied', asyn
       await denied(fn, 'storage/unauthorized'); assertions++;
     }
   }
-  const url = await storage.getDownloadURL(ownerRef);
+  assert.equal(assertions, 8, 'Authenticated SDK denials are distinct from raw bearer-link privacy');
+  const metadataResponse = await fetch(`http://127.0.0.1:9199/storage/v1/b/${config.storageBucket}/o/${encodeURIComponent(records.photo)}`, {headers: {Authorization: 'Bearer owner'}});
+  assert.equal(metadataResponse.status, 200);
+  const tokens = (await metadataResponse.json()).metadata?.firebaseStorageDownloadTokens;
+  assert(tokens, 'Characterize the real token minted by emulator upload/read, without getDownloadURL');
+  const token = tokens.split(',')[0];
+  const url = `http://127.0.0.1:9199/v0/b/${config.storageBucket}/o/${encodeURIComponent(records.photo)}?alt=media&token=${encodeURIComponent(token)}`;
   const bearerResponse = await fetch(url);
-  note('Storage exact unauthorized assertions; bearer URL separate privacy boundary', { assertions, ownerMetadataSize: metadata.size, tokenUrlUnauthStatus: bearerResponse.status });
-  assert.equal(bearerResponse.status, 403, 'Unauthenticated download-token URL must not expose private image');
+  note('ACCEPTED RESIDUAL RISK: 8 SDK denials pass; raw unauthenticated token URL remains readable, NOT strict-private green', { assertions, ownerMetadataSize: metadata.size, tokenUrlUnauthStatus: bearerResponse.status, decision: 'client-only authenticated rendering; token-link risk explicitly accepted' });
+  assert.equal(bearerResponse.status, 200, 'Risk characterization, NOT remediation: explicit user decision accepts emulator bearer access');
+  assert.deepEqual(Buffer.from(await bearerResponse.arrayBuffer()), png);
 });
 
 test('journal DOM deletion must show success remove private detail and verify absence', async () => {
