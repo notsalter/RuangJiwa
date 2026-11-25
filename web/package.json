@@ -8,7 +8,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test:dependencies": "node --test tests/security-dependencies.test.mjs"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:dependencies": "node --test tests/security-dependencies.test.mjs",
+    "check": "npm run typecheck && npm test && npm run test:dependencies && npm run build"
   },
   "dependencies": {
     "firebase": "^11.10.0",
@@ -17,10 +21,14 @@
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",
+    "@testing-library/preact": "^3.2.6",
     "@types/node": "^22.15.0",
+    "@vitest/coverage-v8": "^5.1.1",
+    "jsdom": "^31.0.1",
     "typescript": "~5.9.2",
     "vite": "^7.1.0",
-    "vite-plugin-pwa": "^1.1.0"
+    "vite-plugin-pwa": "^1.1.0",
+    "vitest": "^5.1.1"
   },
   "overrides": {
     "@firebase/firestore": {

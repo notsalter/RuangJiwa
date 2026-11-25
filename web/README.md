@@ -1,51 +1,28 @@
-# RuangJiwa Web (PWA)
+# RuangJiwa web
 
-The lightest-advanced rewrite of RuangJiwa: a static **PWA** you can install on
-mobile, built with **Vite + Preact + TypeScript + vite-plugin-pwa**, with
-Firebase (Auth/Firestore/Storage) as the unchanged backend.
+Lightweight Preact application. Run commands from `web/`, not the legacy Expo root.
 
-## Stack (deliberately minimal)
-
-| Concern | Choice | Why |
-| --- | --- | --- |
-| UI | Preact (~3 kB) | smallest full-featured reactive UI; no compat shim needed |
-| Routing | preact-router (~1.5 kB) | declarative paths + params, enough for this app |
-| Build | Vite 7 | fast, modern, zero-config TS |
-| PWA | vite-plugin-pwa (Workbox) | service worker + manifest + autoUpdate, generated at build |
-| Backend | firebase v10+ modular SDK | same project/collections as the RN app; lazy-loaded chunks |
-| State | tiny hand-rolled store (`src/lib/store.ts`) | the app only needs a session store |
-| i18n | tiny hand-rolled `t()` (`src/lib/i18n.ts`) | two flat dictionaries, no runtime dep |
-| Data fetching | small `useQuery`-like hook (`src/lib/useResource.ts`) | replaces React Query for this CRUD surface |
-| Styling | vanilla modern CSS (layers, custom properties, nesting) | zero runtime, zero build weight |
-| Charts | inline SVG (`src/components/MoodChart.tsx`) | replaces victory-native |
-
-Initial JS payload stays in the low tens of kB (gzipped); Firebase chunks load
-only when auth/data features are used.
-
-## Run
-
-```bash
-cd web
+```sh
 npm ci
-cp .env.example .env   # fill VITE_FIREBASE_* from the Firebase console
-npm run dev            # dev server
-npm run build          # production build + service worker -> dist/
-npm run preview        # serve dist/ locally
-npm run typecheck
+npm run dev
+npm run check
+npm run test:coverage
 ```
 
-The build needs **no secrets**; Firebase initializes lazily at runtime from
-`VITE_FIREBASE_*` env vars.
+`npm run check` typechecks, runs unit/component tests and builds the PWA shell. Firebase SDK modules load lazily. Firestore Lite performs one-shot online queries with no Firestore IndexedDB cache. The service worker caches static application assets, not private Firebase responses.
 
-## PWA / mobile
+## Backend configuration
 
-- Installable (Add to Home Screen / install prompt in-app)
-- `display: standalone`, portrait, theme color, maskable icons
-- Offline app shell via service worker (precached assets + SPA navigation fallback)
-- Web Notifications for mood/consultation reminders
+Copy `.env.example` to a git-ignored `.env` and supply the Firebase web identifiers. Without complete configuration, login is visibly unavailable but the application still opens. There is no guest backend, seeded doctor or production credential.
 
-Deploy `dist/` to any static host over HTTPS (GitHub Pages, Vercel, Netlify) —
-service workers require HTTPS or localhost.
+Deploying requires email/password Auth, Firestore and Storage, appropriate authorized domains, owner-restricting Firestore/Storage rules and an operator privacy policy. Rules and production configuration were absent from the source. Client checks are defense in depth, never a substitute for backend rules. Production connectivity is not verified.
 
-See `MIGRATION.md` at the repo root for the step-by-step transition plan and
-issue #1 for the tracking checklist.
+Optional local emulator integration requires both `VITE_FIREBASE_EMULATORS=true` and `VITE_FIREBASE_PROJECT_ID=demo-ruangjiwa`, plus all normal Firebase identifiers. This exact opt-in connects Auth at `127.0.0.1:9099`, Firestore at `127.0.0.1:8085` and Storage at `127.0.0.1:9199`. It must not be enabled for deployment. No emulator or fake backend is automatically started.
+
+## Boundaries
+
+Private query state is in memory only and is cleared synchronously when the account changes, logout begins or the browser goes offline. Late query/mutation results cannot populate a different account's state. A server write already dispatched before logout cannot be recalled.
+
+Indonesian is the content language. The language selector currently translates navigation only and explicitly labels the limited English scope.
+
+The install prompt and service-worker update policy are maintained separately. Do not infer background reminder support from installation.

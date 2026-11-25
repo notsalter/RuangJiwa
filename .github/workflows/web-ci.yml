@@ -39,6 +39,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit/component tests
+        run: npm test
+
       - name: Dependency compatibility tests
         run: npm run test:dependencies
 
