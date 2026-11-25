@@ -45,6 +45,12 @@ jobs:
       - name: Dependency compatibility tests
         run: npm run test:dependencies
 
+      - name: Install PWA icon test prerequisite
+        run: |
+          python3 -m venv "$RUNNER_TEMP/pwa-python"
+          "$RUNNER_TEMP/pwa-python/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: --no-deps "Pillow==13.0.0"
+          echo "$RUNNER_TEMP/pwa-python/bin" >> "$GITHUB_PATH"
+
       - name: PWA policy and generated worker tests
         run: node --test tests/pwa.test.mjs
 
