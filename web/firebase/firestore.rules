@@ -66,12 +66,17 @@ service cloud.firestore {
     function profileUrl(data, key) {
       return !(key in data) || (boundedText(data[key], 2048) && data[key].matches('https://[^\\s]+'));
     }
+    function profilePath(data) {
+      return !('profileImagePath' in data) || (boundedText(data.profileImagePath, 2048)
+        && data.profileImagePath[0:('profile_images/' + request.auth.uid + '/').size()] == 'profile_images/' + request.auth.uid + '/'
+        && data.profileImagePath[('profile_images/' + request.auth.uid + '/').size():data.profileImagePath.size()].matches('[A-Za-z0-9_-]+([.][A-Za-z0-9_-]+)*'));
+    }
     function validProfile(data) {
-      return data.keys().hasOnly(['name', 'email', 'profileImageUrl', 'photoUrl'])
+      return data.keys().hasOnly(['name', 'email', 'profileImageUrl', 'photoUrl', 'profileImagePath'])
         && optionalText(data, 'name', 100)
         && (!('email' in data) || (boundedText(data.email, 254)
           && data.email.matches('[^@\\s]+@[^@\\s]+[.][^@\\s]+')))
-        && profileUrl(data, 'profileImageUrl') && profileUrl(data, 'photoUrl');
+        && profileUrl(data, 'profileImageUrl') && profileUrl(data, 'photoUrl') && profilePath(data);
     }
     function validConsultation(data) {
       return data.keys().hasAll(['userId', 'psychologistId', 'status', 'scheduledAt'])

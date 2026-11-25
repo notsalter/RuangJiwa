@@ -159,6 +159,29 @@ for (const [label, fields] of Object.entries({ role: { role: 'admin' }, userId: 
   });
 }
 
+test('users: owned profileImagePath create/update/readback and exact 2048 limit allowed', async () => {
+  const path = 'profile_images/alice/avatar.png';
+  await assertSucceeds(setDoc(doc(db(), 'users', 'alice'), { name: 'Alice', profileImagePath: path }));
+  assert.equal((await getDoc(doc(db(), 'users', 'alice'))).data().profileImagePath, path);
+  const limit = 'profile_images/alice/' + 'x'.repeat(2048 - 'profile_images/alice/'.length);
+  await assertSucceeds(updateDoc(doc(db(), 'users', 'alice'), { profileImagePath: limit }));
+  assert.equal((await getDoc(doc(db(), 'users', 'alice'))).data().profileImagePath.length, 2048);
+});
+for (const [label, profileImagePath] of Object.entries({ otherOwner: 'profile_images/bob/avatar', nested: 'profile_images/alice/nested/avatar', traversal: 'profile_images/alice/../avatar', encodedSlash: 'profile_images/alice/avatar%2fother', encodedTraversal: 'profile_images/alice/%2e%2e', doubleEncoded: 'profile_images/alice/%252e', url: 'https://example.test/avatar', emptyFilename: 'profile_images/alice/', tooLong: 'profile_images/alice/' + 'x'.repeat(2048), null: null, wrongType: 1 })) {
+  test(`users: avatar path ${label} rejected on create and update`, async () => {
+    await assertFails(setDoc(doc(db('carol'), 'users', 'carol'), {profileImagePath}));
+    await assertFails(updateDoc(doc(db(), 'users', 'alice'), {profileImagePath}));
+  });
+}
+test('users: HTTP legacy URLs still rejected; avatar transition deletes old URL fields only explicitly', async () => {
+  await assertFails(updateDoc(doc(db(), 'users', 'alice'), {profileImageUrl: 'http://127.0.0.1:9199/image'}));
+  await assertSucceeds(updateDoc(doc(db(), 'users', 'alice'), {profileImageUrl: 'https://example.test/legacy', photoUrl: 'https://example.test/old'}));
+  await assertSucceeds(updateDoc(doc(db(), 'users', 'alice'), {profileImagePath: 'profile_images/alice/new', profileImageUrl: deleteField(), photoUrl: deleteField()}));
+  const data = (await getDoc(doc(db(), 'users', 'alice'))).data();
+  assert.equal(data.profileImagePath, 'profile_images/alice/new');
+  assert(!Object.hasOwn(data, 'photoUrl')); assert(!Object.hasOwn(data, 'profileImageUrl'));
+});
+
 test('psychologists: authenticated get and list allowed', async () => {
   await assertSucceeds(getDoc(doc(db(), 'psychologists', 'psych-1')));
   await assertSucceeds(getDocs(collection(db(), 'psychologists')));
