@@ -1,20 +1,12 @@
-# PWA deployment and update policy
+# PWA deployment, drafts and verification
 
-## Wire the controls once
+## Shell integration
 
-The feature shell must mount this component once, preferably in Settings or a stable app-level status area:
+`App.tsx` mounts `PwaControls` once in the permanent shell and passes real journal dirty state through its required `hasUnsavedChanges` prop. Dirty create/edit drafts disable the explicit reload action; cancellation, successful save or consented navigation can clear that state. Controls register the worker only in production. There is no injected registration script, `workbox-window` client, notification permission request, push subscription or background reminder scheduler.
 
-```tsx
-import { PwaControls } from './pwa/PwaControls';
+The shell's links and route matching use `import.meta.env.BASE_URL`. Personal records require an online authenticated session. The offline view is a code shell, not an offline journal database. Worker caching does not prove Firebase authorization or SDK persistence policy.
 
-<PwaControls hasUnsavedChanges={hasUnsavedJournalChanges} />
-```
-
-`hasUnsavedChanges` is required. Connect it to real dirty editor state, including edits waiting to save. Do not hard-code it to `false` while a journal editor can hold a draft. The component imports its own CSS and registers the service worker only in a production build. Mount it early and keep it mounted so native installation events are not missed. If controls live only in a lazily visited Settings screen, hoist `usePwa()` into the permanent shell and present its state there instead.
-
-There is no injected registration script, `workbox-window` client bundle, notification permission request, scheduled reminder, push subscription or backend in this module. Until the component or hook is mounted, the build emits the worker and manifest but the app does not register the worker.
-
-## Deployment base
+## Deployment
 
 ```sh
 # Domain root
@@ -24,82 +16,60 @@ VITE_BASE_PATH=/ npm run build
 VITE_BASE_PATH=/RuangJiwa/ npm run build
 ```
 
-An unset or empty value selects `/`. A missing trailing slash is added. Only absolute path segments containing letters, digits, `_` or `-` are accepted. URLs, query strings, fragments, encoded separators, whitespace, duplicate slashes and dot segments fail the build.
+Unset or empty selects `/`; a missing trailing slash is added. Only absolute path segments containing letters, digits, `_` or `-` are accepted. URLs, query strings, fragments, encoded separators, whitespace, duplicate slashes and dot segments fail the build. Vite assets, manifest identity/start/scope/icons, Apple icon, worker scope and app links resolve under the same base.
 
-The config actually imports `normalizeBasePath`, `createManifest` and the static path allowlist. Vite assets, manifest identity/start/scope/icons, Apple icon and registration scope resolve under the same deployment base. Router links and route matching in the feature app must also respect `import.meta.env.BASE_URL`; this module does not edit the router.
+Serve over HTTPS (localhost also works), with JavaScript and manifest MIME types and a static index rewrite for app routes on first visit. Do not rewrite API/auth handlers to the SPA. Serve `sw.js` with revalidation or `Cache-Control: no-cache`. Never deploy personalized or server-rendered `index.html` as the cached shell. Hosting configuration and real device installation require separate validation.
 
-Serve over HTTPS (localhost works for development checks), with JavaScript and manifest MIME types and a static index rewrite for eligible app routes on first visit. Never rewrite API or auth handlers to the SPA. Serve `sw.js` with revalidation or `Cache-Control: no-cache`. Do not deploy personalized or server-rendered `index.html`: the only cached HTML is the build's static shell. Production deployments, Firebase access rules and real device installability still require separate checks.
+## Cache and update policy
 
-## What is cached
+`injectManifest` compiles a native worker. Build-time and worker-time allowlists admit only static `index.html`, generated manifest, favicon, approved PNG icons and bundled `assets/*.js`/`assets/*.css`. Precache requests omit credentials and reject redirects, failed and opaque responses. Cache revisions cover manifest entry revisions; activation deletes only older caches bearing this deployment's `ruangjiwa-shell` prefix.
 
-`injectManifest` compiles a small native worker rather than Workbox runtime routing. Build-time and worker-time allowlists admit only:
+The fetch listener ignores non-GET, cross-origin, out-of-scope, query/hash-bearing, Authorization-bearing and Range requests. API/auth/session/data/emulator segments, Firebase `/__/auth`, emulator `/v1` and `/v2`, and identity/secure-token paths are excluded, including encoded path segments. Non-navigation responses are served only for exact static manifest URLs. There is no runtime response caching and query parameters are not stripped. Eligible extensionless navigations receive the static index; excluded navigations fail normally offline. A static asset cache miss uses the network without adding its response; a missing offline index returns a plain 503 message.
 
-- Static `index.html`, generated manifest and favicon.
-- Known approved PNG icons.
-- Bundled `assets/*.js` and `assets/*.css`.
+- Chromium installation is offered only after a real `beforeinstallprompt` event. Prompt acceptance is not installation proof; `appinstalled` or standalone display mode changes that state.
+- iPhone/iPad guidance is manual Safari **Bagikan > Tambahkan ke Layar Utama**, not an automated install button. Other unsupported browsers receive browser-menu guidance.
+- Installation detection uses display mode, iOS `navigator.standalone` and `appinstalled`, without persistent installation tracking.
+- New workers wait. Neither install nor activation calls `clients.claim()`. Only an explicit update click sends `skipWaiting()`; only the consenting tab reloads after that worker activates.
+- Save drafts in all tabs before activation. Other tabs are not automatically reloaded. Normal browser lifecycle can activate a waiting worker when all old clients close.
+- Registration/update/install errors show a retry action. Returning to a visible online tab checks for updates; there is no polling timer.
 
-Precache requests omit credentials and reject redirects, failed responses and opaque responses. The cache version includes all manifest entry revisions. Cache activation removes only older caches with this deployment's `ruangjiwa-shell` prefix, not arbitrary caches on the origin.
+## Native history and unsaved journals
 
-The fetch listener ignores non-GET, cross-origin, out-of-scope, query/hash-bearing, Authorization-bearing and Range requests. API/auth/session/data/emulator segments, Firebase `/__/auth`, emulator `/v1` and `/v2`, and identity/secure-token paths are explicitly excluded, including encoded path segments. Non-navigation requests are served only when their exact URL is in the static manifest. There is no runtime response caching. Query parameters are never silently stripped.
+App-owned entries carry a namespaced traversal-series ID and entry index in `history.state`. Initial indexing preserves unrelated object fields; restoration never rewrites existing destination entries. Declining a dirty Back/Forward traversal runs `history.go(previousIndex - destinationIndex)`. The restoration `popstate` is suppressed without re-prompting or unmounting the editor. This preserves multi-entry traversal distance and future entries; pushing a replacement Journal entry would instead delete Forward history.
 
-Eligible extensionless navigation paths receive the precached static index. Auth/API paths and query-sensitive navigation bypass the worker and therefore fail normally when offline. A cache miss for a static asset uses the network without adding that response to the cache. A missing offline index returns a plain, truthful 503 message.
+Indices are local to an App-owned series, not guessed absolute browser-history positions. Entries from other documents, scripts or older sessions can be missing metadata or belong to another series:
 
-This is offline code-shell support, not an offline journal database, session cache or security guarantee. Firebase SDK persistence, authorization and any feature-level storage are outside this worker's policy.
+- When a cancellable same-document Navigation API event is available, unknown native entry keys are checked before traversal. Declining cancels that event; accepting allows the real entry without overwriting its state. `NavigationDestination.getState()` is not used to infer `history.state`: those APIs have distinct state stores.
+- Without pre-traversal cancellation, `popstate` cannot safely restore an unindexed destination. The native URL/state remain untouched, the dirty editor stays mounted, and a visible warning explains the mismatch. Saving/cancelling the draft resumes rendering the actual destination. **Muat halaman tujuan** performs a native document navigation, guarded by the editor's `beforeunload` handler.
+- Cross-document Back, native document links, reload and closing a dirty page rely on browser `beforeunload`. Browsers can suppress that prompt, especially on mobile; this is not durable draft storage or a guarantee against process termination.
 
-## Install and update behavior
-
-- Chromium-style installation is offered only after a real `beforeinstallprompt` event. The one-shot event is consumed by a native button. Accepting the prompt is not treated as proof of installation; `appinstalled` or standalone display mode updates that state.
-- iPhone/iPad users see Safari **Bagikan > Tambahkan ke Layar Utama** instructions and no automated install button. Availability still depends on the actual browser/device. Desktop Safari and other browsers get truthful browser-menu guidance if no native event exists.
-- `display-mode: standalone`, iOS `navigator.standalone`, and `appinstalled` are observed without persistent installation tracking.
-- A new worker waits. Neither installation nor activation calls `clients.claim()`. `skipWaiting()` is sent only by an explicit update click, never a timer or background update event.
-- Dirty editors disable the reload action. Clear/save drafts in all tabs before activating a new worker. Other tabs are not automatically reloaded. The current tab reloads only after its requested worker reaches `activated`.
-- The browser can activate a waiting worker after all old clients close, according to its normal lifecycle. That is not an automatic reload of an open editor.
-- Registration/update/install errors are visible with a retry button. Returning to a visible tab checks for updates when online; there is no polling interval.
-
-## Verification
+## Verification and current gate
 
 ```sh
 npm ci
+npm run check
 node --test tests/pwa.test.mjs
-npm run typecheck
-npm run build
+npm audit
+VITE_BASE_PATH=/RuangJiwa/ npm run build
 ```
 
-The Node tests use native TypeScript stripping (Node 22.18+ or newer), real Vite subpath builds and an executable generated-worker harness. The pixel check also needs Python with Pillow. Tests cover invalid base values, manifest/HTML paths, install detection, component bundling, actual generated worker install/fetch/message/cleanup behavior, omitted precache credentials, auth/emulator/API/query bypass and exact approved Apple icon pixels.
+`npm run check` includes typecheck, source tests, dependency compatibility and the root build, but not the PWA Node suite. CI now runs `node --test tests/pwa.test.mjs` as a separate step immediately after dependency compatibility. Node tests need native TypeScript stripping (Node 22.18+); the icon check needs Python with Pillow.
 
-A separate scratch-only Chromium harness mounted the actual component against the built worker and recorded:
+The unchanged integrated base passed 58 source tests, 5 dependency tests and 5 PWA tests. The history repair adds 4 source regressions. All 4 fail on the immutable base and pass with the repair. The full current source run is **61 passed, 1 failed**: `src/integration/journal-pwa.test.tsx:58-60` uses `replaceState({}, "", "/profile")` and a synthetic `popstate`, then expects the old URL to be written back. That expectation conflicts with leaving unindexed history untouched. The fixture is outside this repair's ownership and remains unchanged; the integrated gate is not approved until its owner reconciles it with the native-history contract. Typecheck, separate dependency/PWA suites and root/subpath production builds pass. The current registry-backed full `npm audit` reports zero vulnerabilities. The inherited root Expo tsconfig warning remains during builds.
 
-- Actual shell-only cache contents and offline navigation success.
-- Offline API/query navigation failure, with no shell substitution.
-- Dirty draft retained while an update waited; reload button disabled.
-- Keyboard Enter on an enabled update activated the worker and reloaded.
-- Deferred install action, dismissed prompt, rejected prompt/error/retry and `appinstalled` UI state.
-- iOS user-agent instructions with no fake install button.
-- No horizontal overflow at 320, 390 and 720 CSS pixels, or at 200% text size.
-- A visible 3px keyboard focus outline, 44px button height and no page errors.
+Scratch-only real Chromium checks at both `/` and `/RuangJiwa/` passed:
 
-Native operating-system installation and real iOS Safari were not exercised. The existing feature router is intentionally untouched; its integration and subpath route rendering belong to the feature shell.
+- Home > Mood > Journal > dirty Back refusal > cancel draft > Back returns to Mood, then Forward returns to Journal.
+- Repeated refusals, `history.go(-2)`, Back/Forward acceptance and `history.go(2)` preserve the stack, future entries, unrelated state and the refused draft.
+- Unknown same-document entries can be declined repeatedly and accepted without state loss; real cross-document Back uses `beforeunload` and retains the draft on refusal.
+- Actual production shell registration, all app tabs/quiz links, dirty link/Back/reload refusal, failed create/edit saves and offline return retain the editor.
+- A real waiting update remains blocked for dirty/in-flight edits; keyboard Enter activates an enabled update and reloads only the consenting tab.
+- Actual CacheStorage contains exactly 14 approved static keys per deployment. Offline shell navigation works; API/auth/query/out-of-scope navigations bypass the worker. No page errors or shell overflow at 320, 390 and 720 CSS pixels were observed.
 
-### Measured size, not a superlative
+These browser checks use the real App, Session, Journal and controls with an explicitly supplied backend fixture, not Firebase. Firebase emulator authorization, live Firebase operations, native operating-system installation and real iOS Safari remain unverified. Earlier component-only checks exercised synthetic install/error/retry/iOS detection, focus/44px controls and 200% text; synthetic events are not native install evidence.
 
-On the unchanged scaffold dependency baseline, the built root worker was **3,004 bytes**, **1,512 bytes gzip**, with **9 actual cached shell files**. The scratch component harness (Preact, controls and minimal editor combined) was **18,380 bytes JS**, **7,461 bytes gzip**; its CSS was **1,083 bytes**, **489 bytes gzip**. These are local build measurements, not a comparison with other apps or a field-performance claim. Rebuild after integrating the feature app to measure the final bundle. No Lighthouse or Web Vitals score was measured.
+Current local root output has a **3,283-byte generated worker** (**1,576 bytes gzip**) and a **60,725-byte main JS bundle** (**21,340 bytes gzip**). This is the integrated build, not the earlier scaffold measurement or a field-performance comparison. No Lighthouse or Web Vitals score was measured.
 
-## Design and delivery gate
+## Design scope
 
-Approved direction: indigo identity, ENERGY 1 / RHYTHM 2 / MOTION 1.
-
-- Indigo action color reuses the approved app identity; it does not introduce a new logo or palette.
-- Inline status and grouped update controls keep drafts visible without a modal, focus theft or an overlay hiding the editor.
-- Inherited system typography avoids a font download and matches the shell.
-- Spacing separates installation guidance from the draft-sensitive update action; restrained radii distinguish the container from buttons.
-- No icons, gradients, shadows or motion are added. Existing Apple artwork is only alpha-composited onto opaque indigo.
-
-Scope of the gate is the new controls and changed HTML/config, not the feature agent's untouched UI.
-
-- Hard gate PASS: owned copy has no em dashes, fabricated claims, fake data or dead controls; native actions/error/retry were clicked, install support is event-driven, and iOS is manual only.
-- Accessibility PASS: visible named buttons/status/error semantics, 44px targets, focus outline, mobile reflow and 200% text exercised. Computed white/indigo contrast is 6.29:1; ink/white 17.74:1; muted/white 4.83:1. There is no custom modal, image content or animation in the controls.
-- Purpose gate PASS: identity/typography/layout/spacing reasons are recorded above; no unapproved artwork or decorative effects added.
-- Liveliness PASS: declared calm dials, one primary update/install action at a time, structural spacing and repeated approved indigo action treatment.
-- Craftsmanship PASS: real build/typecheck/tests and Chromium click-through passed, error/dirty/installed/unsupported states are present. Real device install and final feature routing are explicitly unverified rather than claimed.
-
-Known baseline: `npm ci` reported 8 audit vulnerabilities (4 moderate, 4 high) and the root Expo tsconfig warning appears during build. Package and lock files are deliberately unchanged because the parent is implementing the separate dependency/security fix.
+Controls retain the approved indigo identity, inherited system typography and calm ENERGY 1 / RHYTHM 2 / MOTION 1 direction. Inline status preserves draft visibility; spacing separates installation guidance from update actions. No new artwork, font download, modal, decoration or motion was added. The unindexed-history warning uses native alert/link semantics and existing shell styling. These statements concern this PWA/history scope, not unrelated feature UI or authorization guarantees.
