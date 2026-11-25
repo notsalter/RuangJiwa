@@ -20,4 +20,17 @@ Boundary mocks replace Firebase/network operations only. Session state, selector
 - RED: journal stub did not reject short content and returned no search matches. GREEN: trimmed length validation, tags deduplication, prompts, favorite filtering and date order passed.
 - RED: journal page lacked content controls. GREEN: create, read, update, favorite, explicit deletion confirmation and trimmed-short-content rejection component interactions passed.
 
-Core gate: `npm run check` passed with 11 unit/component tests, TypeScript and production build. Legacy root tsconfig lookup warning comes from Vite's config bundler, not executing Expo scripts.
+## Quizzes, consultations and profile
+
+- RED: empty quiz definitions and scoring stub failed. GREEN: both original five-question sets and all 0/6/7/12/13/15 category boundaries passed.
+- RED: quiz page lacked its selection control. GREEN: incomplete answers rejected, real scores saved to quizHistory, informal result and history rendered.
+- RED: consultation draft accepted past/invalid times. GREEN: explicit future datetime, pending-not-confirmed status and cancellable status checks passed.
+- RED: consultation page lacked directory detail control. GREEN: actual boundary directory/detail, unsafe-photo rejection, future request, cancellation confirmation and confirmed-only ICS passed.
+- RED: profile validation returned no feedback for a blank name. GREEN: name bounds, MIME and 5 MB limits passed.
+- RED: profile page lacked name controls. GREEN: current Auth email readonly, name/photo save and password reset feedback passed.
+- RED: offline Session lacked setOnline. GREEN: no queries/profile refreshes while offline and stale profiles cannot restore after clear. Initial auth stays pending until observed.
+- RED: mood history hid records older than the chart window. GREEN: all 20 test records remain visible while the chart uses 14.
+- RED: record decoder returned null for a valid document. GREEN: document-id precedence and runtime schema validation prevent malformed values entering UI.
+- RED: writes reported success without readback. GREEN: create/update/delete exact-target verification and Auth/users profile readback passed.
+
+Final gate: `npm run check` passed with 35 unit/component tests across 22 files, TypeScript and production build. `npm run test:coverage` measured statements 82.49%, branches 77.98%, functions 79.09%, lines 82.93%. Firebase SDK boundary coverage is partial; emulator/network integration belongs to the parent. Earlier commits passed 11 and 19 tests respectively. Legacy root tsconfig lookup warning comes from Vite's config bundler, not executing Expo scripts.

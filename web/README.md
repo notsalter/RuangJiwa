@@ -19,6 +19,12 @@ Deploying requires email/password Auth, Firestore and Storage, appropriate autho
 
 Optional local emulator integration requires both `VITE_FIREBASE_EMULATORS=true` and `VITE_FIREBASE_PROJECT_ID=demo-ruangjiwa`, plus all normal Firebase identifiers. This exact opt-in connects Auth at `127.0.0.1:9099`, Firestore at `127.0.0.1:8085` and Storage at `127.0.0.1:9199`. It must not be enabled for deployment. No emulator or fake backend is automatically started.
 
+## Preserved features
+
+Email login/registration, profile name/photo editing (Auth plus users/Storage), readonly current Auth email and password reset; journal create/read/edit/delete with prompts/moods/tags/favorites/search; mood entry/full history and 14-point chart; both original informal quizzes and quizHistory; Firebase psychologist directory/detail; future consultation requests, history and cancellation; Home greeting/last mood/next active consultation. Existing collection names and ISO timestamp field names are retained.
+
+Mood reminders and confirmed future consultation reminders export `.ics` calendar files. Importing and allowing alerts in the calendar application is the user's responsibility. There is no web push backend or startup notification permission request.
+
 ## Boundaries
 
 Private query state is in memory only and is cleared synchronously when the account changes, logout begins or the browser goes offline. Late query/mutation results cannot populate a different account's state. A server write already dispatched before logout cannot be recalled.

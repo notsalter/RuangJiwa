@@ -1,4 +1,37 @@
-import { it, expect } from 'vitest';
-import { moodOptions, moodDraft, moodSeries } from './mood';
-it('keeps five stored mood values with legacy emoji and rejects an unknown mood', () => { expect(moodOptions.map(x => x.value)).toEqual(['very_sad', 'sad', 'neutral', 'happy', 'very_happy']); expect(moodOptions.map(x => x.emoji)).toEqual(['😢', '🙁', '😐', '🙂', '😄']); expect(() => moodDraft('invalid', '', new Date())).toThrow(); expect(moodDraft('happy', ' note ', new Date('2026-01-01Z'))).toEqual({ mood: 'happy', note: 'note', createdAt: '2026-01-01T00:00:00.000Z' }); });
-it('charts recorded chronological values only with safe empty and invalid data', () => { expect(moodSeries([])).toEqual([]); expect(moodSeries([{ id: 'b', mood: 'happy', createdAt: '2026-01-02' }, { id: 'a', mood: 'sad', createdAt: '2026-01-01' }, { id: 'bad', mood: 'happy', createdAt: 'invalid' }]).map(x => [x.id, x.value])).toEqual([['a', 2], ['b', 4]]); });
+import { it, expect } from "vitest";
+import { moodOptions, moodDraft, moodSeries } from "./mood";
+it("keeps five stored mood values with legacy emoji and rejects an unknown mood", () => {
+  expect(moodOptions.map((x) => x.value)).toEqual([
+    "very_sad",
+    "sad",
+    "neutral",
+    "happy",
+    "very_happy",
+  ]);
+  expect(moodOptions.map((x) => x.emoji)).toEqual([
+    "😢",
+    "🙁",
+    "😐",
+    "🙂",
+    "😄",
+  ]);
+  expect(() => moodDraft("invalid", "", new Date())).toThrow();
+  expect(moodDraft("happy", " note ", new Date("2026-01-01Z"))).toEqual({
+    mood: "happy",
+    note: "note",
+    createdAt: "2026-01-01T00:00:00.000Z",
+  });
+});
+it("charts recorded chronological values only with safe empty and invalid data", () => {
+  expect(moodSeries([])).toEqual([]);
+  expect(
+    moodSeries([
+      { id: "b", mood: "happy", createdAt: "2026-01-02" },
+      { id: "a", mood: "sad", createdAt: "2026-01-01" },
+      { id: "bad", mood: "happy", createdAt: "invalid" },
+    ]).map((x) => [x.id, x.value]),
+  ).toEqual([
+    ["a", 2],
+    ["b", 4],
+  ]);
+});
