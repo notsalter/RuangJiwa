@@ -1,3 +1,4 @@
+import { appHref } from "../core/navigation";
 import { useState } from "preact/hooks";
 import { Session } from "../core/session";
 import { useQuery } from "../core/hooks";
@@ -124,7 +125,7 @@ export function QuizPage({
                 {quizCategories[result.category].title}: {result.score} / 15
               </h3>
               <p>{quizCategories[result.category].description}</p>
-              <a href="/consultations">Lihat psikolog</a>
+              <a href={appHref("/consultations")}>Lihat psikolog</a>
             </section>
           )}
         </section>
