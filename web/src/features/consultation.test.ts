@@ -17,5 +17,6 @@ it("requires explicit future time and writes a pending request rather than a con
   expect(canCancel("canceled")).toBe(false);
   expect(canCancel("completed")).toBe(false);
   expect(canCancel("pending")).toBe(true);
-  expect(canCancel("confirmed")).toBe(true);
+  expect(canCancel("confirmed")).toBe(false);
+  expect(canCancel("unknown")).toBe(false);
 });

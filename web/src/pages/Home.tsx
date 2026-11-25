@@ -1,3 +1,4 @@
+import { appHref } from "../core/navigation";
 import { moodOptions } from "../features/mood";
 import { Session } from "../core/session";
 import { useQuery, useSession } from "../core/hooks";
@@ -24,9 +25,9 @@ export function Home({
       </p>
       <h1>Apa kabar hari ini?</h1>
       <div class="actions">
-        <a href="/mood">Catat mood</a>
-        <a href="/journal">Tulis jurnal</a>
-        <a href="/consultations">Lihat psikolog</a>
+        <a href={appHref("/mood")}>Catat mood</a>
+        <a href={appHref("/journal")}>Tulis jurnal</a>
+        <a href={appHref("/consultations")}>Lihat psikolog</a>
       </div>
       <section class="focal">
         <h2>Ruang untuk berhenti sejenak</h2>

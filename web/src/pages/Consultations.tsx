@@ -1,3 +1,4 @@
+import { appHref } from "../core/navigation";
 import { useState } from "preact/hooks";
 import { Session } from "../core/session";
 import { useQuery } from "../core/hooks";
@@ -15,6 +16,7 @@ import {
   dateLabel,
 } from "../ui/shared";
 import { CalendarReminder } from "../ui/CalendarReminder";
+import { formLimits, noteFormError } from "../ui/forms";
 export function ConsultationsPage({
   session,
   path: _path,
@@ -38,7 +40,7 @@ export function ConsultationsPage({
         Pilih psikolog dari direktori dan ajukan waktu. Permintaan belum menjadi
         janji sampai dikonfirmasi oleh pengelola.
       </p>
-      <a href="/quiz">Isi kuis refleksi</a>
+      <a href={appHref("/quiz")}>Isi kuis refleksi</a>
       <section>
         <h2>Direktori psikolog</h2>
         <QueryFeedback
@@ -93,6 +95,11 @@ export function ConsultationsPage({
                 setValidation("Pilih waktu mendatang yang valid.");
                 return;
               }
+              const error = noteFormError(notes, "consultation");
+              if (error) {
+                setValidation(error);
+                return;
+              }
               void action.run(
                 () =>
                   session.create(
@@ -122,8 +129,11 @@ export function ConsultationsPage({
             <Field label="Catatan untuk pengelola (opsional)">
               <textarea
                 value={notes}
-                maxLength={5000}
-                onInput={(e) => setNotes(e.currentTarget.value)}
+                maxLength={formLimits.consultationNotes}
+                onInput={(e) => {
+                  setNotes(e.currentTarget.value);
+                  setValidation("");
+                }}
               />
             </Field>
             {validation && <p role="alert">{validation}</p>}
@@ -165,19 +175,24 @@ export function ConsultationsPage({
                   disabled={action.busy}
                   onClick={() => setCancel(item.id)}
                 >
-                  {item.status === "pending"
-                    ? "Batalkan permintaan"
-                    : "Batalkan jadwal"}
+                  Batalkan permintaan
                 </button>
               )}
-              {cancel === item.id && (
+              {item.status === "confirmed" && (
+                <p>Jadwal terkonfirmasi tidak dapat dibatalkan di sini. Hubungi pengelola untuk perubahan jadwal.</p>
+              )}
+              {item.status === "completed" && (
+                <p>Konsultasi yang sudah selesai tidak dapat dibatalkan.</p>
+              )}
+              {canCancel(item.status) && cancel === item.id && (
                 <div role="group" aria-label="Konfirmasi pembatalan">
-                  <p>Batalkan permintaan atau jadwal ini?</p>
+                  <p>Batalkan permintaan yang belum terkonfirmasi ini?</p>
                   <div class="actions">
                     <button
                       disabled={action.busy}
                       onClick={() =>
                         void action.run(async () => {
+                          if (!canCancel(item.status)) return false;
                           const saved = await session.update(
                             "consultations",
                             item.id,

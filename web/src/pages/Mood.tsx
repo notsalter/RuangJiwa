@@ -11,6 +11,7 @@ import {
   dateLabel,
 } from "../ui/shared";
 import { CalendarReminder } from "../ui/CalendarReminder";
+import { formLimits, noteFormError } from "../ui/forms";
 export function MoodPage({
   session,
   path: _path,
@@ -21,6 +22,7 @@ export function MoodPage({
   const query = useQuery(session, "moods"),
     [mood, setMood] = useState<Mood>("neutral"),
     [note, setNote] = useState(""),
+    [validation, setValidation] = useState(""),
     action = useAction();
   const series = moodSeries(query.items),
     points = series
@@ -35,6 +37,11 @@ export function MoodPage({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          const error = noteFormError(note, "mood");
+          if (error) {
+            setValidation(error);
+            return;
+          }
           void action.run(async () => {
             const saved = await session.create(
               "moods",
@@ -64,10 +71,14 @@ export function MoodPage({
         <Field label="Catatan (opsional)">
           <textarea
             value={note}
-            maxLength={5000}
-            onInput={(e) => setNote(e.currentTarget.value)}
+            maxLength={formLimits.moodNote}
+            onInput={(e) => {
+              setNote(e.currentTarget.value);
+              setValidation("");
+            }}
           />
         </Field>
+        {validation && <p role="alert">{validation}</p>}
         <button class="primary" disabled={action.busy}>
           Simpan mood
         </button>

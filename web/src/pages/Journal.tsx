@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Session } from "../core/session";
 import { useQuery } from "../core/hooks";
 import {
@@ -15,6 +15,7 @@ import {
   QueryFeedback,
   dateLabel,
 } from "../ui/shared";
+import { formLimits, journalFormError } from "../ui/forms";
 const blank: JournalDraft = {
   title: "",
   content: "",
@@ -26,13 +27,16 @@ const blank: JournalDraft = {
 export function JournalPage({
   session,
   path: _path,
+  onDirtyChange,
 }: {
   session: Session;
   path?: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const query = useQuery(session, "journals"),
     action = useAction();
   const [draft, setDraft] = useState<JournalDraft>(blank),
+    [baseline, setBaseline] = useState<JournalDraft>(blank),
     [selected, setSelected] = useState(""),
     [editing, setEditing] = useState(""),
     [confirm, setConfirm] = useState(false),
@@ -41,6 +45,24 @@ export function JournalPage({
     [favorites, setFavorites] = useState(false);
   const entry = query.items.find((x) => x.id === selected),
     visible = filterJournals(query.items, search, favorites);
+  const latestDraft = useRef(draft);
+  latestDraft.current = draft;
+  const dirty = (Object.keys(blank) as (keyof JournalDraft)[]).some(
+    (key) => draft[key] !== baseline[key],
+  );
+  useLayoutEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useLayoutEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+  useLayoutEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   const change = (key: keyof JournalDraft, value: string | boolean) => {
     setDraft({ ...draft, [key]: value });
     setValidation("");
@@ -51,10 +73,9 @@ export function JournalPage({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          if (draft.content.trim().length < 10) {
-            setValidation(
-              "Isi jurnal minimal 10 karakter setelah spasi tepi dihapus.",
-            );
+          const error = journalFormError(draft);
+          if (error) {
+            setValidation(error);
             return;
           }
           void action.run(async () => {
@@ -68,8 +89,11 @@ export function JournalPage({
                 })
               : await session.create("journals", data);
             if (saved) {
-              setEditing("");
-              setDraft(blank);
+              if (latestDraft.current === draft) {
+                setEditing("");
+                setBaseline(blank);
+                setDraft(blank);
+              } else setBaseline(draft);
             }
             return saved;
           });
@@ -78,7 +102,7 @@ export function JournalPage({
         <Field label="Judul (opsional)">
           <input
             value={draft.title}
-            maxLength={200}
+            maxLength={formLimits.journalTitle}
             onInput={(e) => change("title", e.currentTarget.value)}
           />
         </Field>
@@ -111,7 +135,7 @@ export function JournalPage({
           <textarea
             required
             minLength={10}
-            maxLength={50000}
+            maxLength={formLimits.journalContent}
             value={draft.content}
             onInput={(e) => change("content", e.currentTarget.value)}
           />
@@ -132,10 +156,11 @@ export function JournalPage({
         <Field label="Tag (pisahkan dengan koma)">
           <input
             value={draft.tags}
-            maxLength={500}
+            maxLength={formLimits.journalTagsInput}
             onInput={(e) => change("tags", e.currentTarget.value)}
           />
         </Field>
+        <p>Maksimal 10 tag, masing-masing 40 karakter.</p>
         <label class="choice">
           <input
             type="checkbox"
@@ -149,16 +174,18 @@ export function JournalPage({
           <button class="primary" disabled={action.busy}>
             {editing ? "Simpan perubahan" : "Simpan jurnal"}
           </button>
-          {editing && (
+          {(editing || dirty) && (
             <button
               type="button"
+              disabled={action.busy}
               onClick={() => {
                 setEditing("");
+                setBaseline(blank);
                 setDraft(blank);
                 setValidation("");
               }}
             >
-              Batal edit
+              {editing ? "Batal edit" : "Batalkan jurnal"}
             </button>
           )}
         </div>
@@ -188,9 +215,26 @@ export function JournalPage({
               {entry.isFavorite ? "Hapus favorit" : "Favoritkan"}
             </button>
             <button
+              disabled={action.busy}
               onClick={() => {
+                if (
+                  dirty &&
+                  !window.confirm(
+                    "Jurnal belum disimpan. Buang perubahan dan edit jurnal ini?",
+                  )
+                )
+                  return;
+                const initial: JournalDraft = {
+                  title: entry.title ?? "",
+                  content: entry.content,
+                  mood: entry.mood ?? "",
+                  prompt: entry.prompt ?? "",
+                  tags: entry.tags?.join(", ") ?? "",
+                  isFavorite: entry.isFavorite ?? false,
+                };
                 setEditing(entry.id);
-                setDraft({ ...entry, tags: entry.tags?.join(", ") ?? "" });
+                setBaseline(initial);
+                setDraft(initial);
                 setValidation("");
               }}
             >
