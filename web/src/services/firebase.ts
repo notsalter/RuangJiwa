@@ -37,7 +37,7 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
     const ref = c.store.doc(c.db, name, id),
       snap = await c.store.getDoc(ref);
     assertOwner(c.auth, uid);
-    if (!snap.exists() || snap.data().userId !== uid)
+    if (!snap.exists() || snap.data()?.userId !== uid)
       throw new Error("not-owner");
     return { c, ref, data: snap.data() };
   }
@@ -219,9 +219,17 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
       assertOwner(c.auth, uid);
       await c.store.deleteDoc(ref);
       assertOwner(c.auth, uid);
-      const snap = await c.store.getDoc(ref);
+      const snap = await c.store.getDocs(
+        c.store.query(
+          c.store.collection(c.db, name),
+          c.store.where("userId", "==", uid),
+          c.store.where(c.store.documentId(), "==", id),
+          // Keep query authorization: a point-only query checks missing resource data.
+          c.store.where(c.store.documentId(), ">=", id),
+        ),
+      );
       assertOwner(c.auth, uid);
-      if (snap.exists()) throw new Error("delete-not-verified");
+      if (snap.docs.length) throw new Error("delete-not-verified");
     },
   };
 }
