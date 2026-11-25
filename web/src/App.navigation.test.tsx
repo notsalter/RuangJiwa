@@ -14,7 +14,9 @@ it("routes every visible tab and quiz to built screens and waits for initial aut
     list: async () => [],
   } as unknown as Backend);
   render(<App session={session} />);
-  expect(screen.getByRole("status").textContent).toContain("Memeriksa");
+  expect(screen.getByText("Memeriksa sesi...").getAttribute("role")).toBe(
+    "status",
+  );
   expect(screen.queryByRole("button", { name: "Masuk" })).toBeNull();
   auth({ uid: "a", email: null });
   await screen.findByRole("navigation");
