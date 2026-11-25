@@ -45,6 +45,9 @@ jobs:
       - name: Dependency compatibility tests
         run: npm run test:dependencies
 
+      - name: PWA policy and generated worker tests
+        run: node --test tests/pwa.test.mjs
+
       - name: Build PWA
         run: npm run build
 
