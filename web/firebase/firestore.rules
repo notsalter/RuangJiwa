@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owns(data) { return signedIn() && data.userId == request.auth.uid; }
+    function boundedText(value, max) { return value is string && value.size() <= max; }
+    function optionalText(data, key, max) { return !(key in data) || boundedText(data[key], max); }
+    function mood(value) { return value in ['very_sad', 'sad', 'neutral', 'happy', 'very_happy']; }
+
+    // Match the UTC millisecond strings emitted by the existing clients.
+    function isoShape(value) {
+      return value is string
+        && value.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9][.][0-9]{3}Z');
+    }
+    function isoDate(value) {
+      return timestamp.date(int(value[0:4]), int(value[5:7]), int(value[8:10]));
+    }
+    function validIso(value) {
+      return isoShape(value)
+        && isoDate(value).year() == int(value[0:4])
+        && isoDate(value).month() == int(value[5:7])
+        && isoDate(value).day() == int(value[8:10]);
+    }
+    function isoTime(value) {
+      return isoDate(value) + duration.value(
+        int(value[11:13]) * 3600000 + int(value[14:16]) * 60000
+        + int(value[17:19]) * 1000 + int(value[20:23]), 'ms');
+    }
+    function tagAt(tags, index) {
+      return tags.size() <= index
+        || (boundedText(tags[index], 40) && tags[index].size() > 0);
+    }
+    function validTags(data) {
+      return !('tags' in data) || (data.tags is list && data.tags.size() <= 10
+        && tagAt(data.tags, 0) && tagAt(data.tags, 1) && tagAt(data.tags, 2)
+        && tagAt(data.tags, 3) && tagAt(data.tags, 4) && tagAt(data.tags, 5)
+        && tagAt(data.tags, 6) && tagAt(data.tags, 7) && tagAt(data.tags, 8)
+        && tagAt(data.tags, 9));
+    }
+    function validJournal(data) {
+      return data.keys().hasAll(['userId', 'content', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'content', 'createdAt', 'title', 'prompt', 'mood', 'tags', 'isFavorite'])
+        && boundedText(data.content, 10000) && data.content.trim().size() >= 10
+        && validIso(data.createdAt)
+        && optionalText(data, 'title', 160) && optionalText(data, 'prompt', 1000)
+        && (!('mood' in data) || mood(data.mood))
+        && (!('isFavorite' in data) || data.isFavorite is bool)
+        && validTags(data);
+    }
+    function validMood(data) {
+      return data.keys().hasAll(['userId', 'mood', 'createdAt'])
+        && data.keys().hasOnly(['userId', 'mood', 'createdAt', 'note'])
+        && mood(data.mood) && optionalText(data, 'note', 2000)
+        && validIso(data.createdAt);
+    }
+    function validQuiz(data) {
+      return data.keys().hasAll(['userId', 'quizType', 'score', 'category', 'takenAt'])
+        && data.keys().hasOnly(['userId', 'quizType', 'score', 'category', 'takenAt'])
+        && data.quizType in ['stress', 'anxiety']
+        && data.score is int && data.score >= 0 && data.score <= 15
+        && ((data.score <= 6 && data.category == 'low')
+          || (data.score >= 7 && data.score <= 12 && data.category == 'moderate')
+          || (data.score >= 13 && data.category == 'high'))
+        && validIso(data.takenAt);
+    }
+    function profileUrl(data, key) {
+      return !(key in data) || (boundedText(data[key], 2048) && data[key].matches('https://[^\\s]+'));
+    }
+    function validProfile(data) {
+      return data.keys().hasOnly(['name', 'email', 'profileImageUrl', 'photoUrl'])
+        && optionalText(data, 'name', 100)
+        && (!('email' in data) || (boundedText(data.email, 254)
+          && data.email.matches('[^@\\s]+@[^@\\s]+[.][^@\\s]+')))
+        && profileUrl(data, 'profileImageUrl') && profileUrl(data, 'photoUrl');
+    }
+    function validConsultation(data) {
+      return data.keys().hasAll(['userId', 'psychologistId', 'status', 'scheduledAt'])
+        && data.keys().hasOnly(['userId', 'psychologistId', 'status', 'scheduledAt', 'notes'])
+        && boundedText(data.psychologistId, 128) && data.psychologistId.size() > 0
+        && data.psychologistId.matches('[^/]+')
+        && data.status in ['pending', 'confirmed', 'completed', 'canceled']
+        && validIso(data.scheduledAt) && optionalText(data, 'notes', 2000);
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if false;
+      allow create, update: if signedIn() && request.auth.uid == uid && validProfile(request.resource.data);
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+    match /journals/{id} {
+      allow get, list, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validJournal(request.resource.data);
+      allow update: if owns(resource.data) && owns(request.resource.data)
+        && request.resource.data.userId == resource.data.userId && validJournal(request.resource.data);
+    }
+    match /moods/{id} {
+      allow get, list, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validMood(request.resource.data);
+      allow update: if owns(resource.data) && owns(request.resource.data)
+        && request.resource.data.userId == resource.data.userId && validMood(request.resource.data);
+    }
+    match /quizHistory/{id} {
+      allow get, list, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validQuiz(request.resource.data);
+      allow update: if owns(resource.data) && owns(request.resource.data)
+        && request.resource.data.userId == resource.data.userId && validQuiz(request.resource.data);
+    }
+    match /consultations/{id} {
+      allow get, list: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validConsultation(request.resource.data)
+        && request.resource.data.status == 'pending'
+        && isoTime(request.resource.data.scheduledAt) > request.time
+        && exists(/databases/$(database)/documents/psychologists/$(request.resource.data.psychologistId));
+      allow update: if owns(resource.data) && owns(request.resource.data)
+        && validConsultation(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && resource.data.status == 'pending' && request.resource.data.status == 'canceled';
+      allow delete: if false;
+    }
+    match /psychologists/{id} {
+      allow get, list: if signedIn();
+      // Provision via a separately authorized backend, never a browser claim.
+      allow create, update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
