@@ -1,0 +1,16 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    function profileImage() {
+      return request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+    }
+    match /profile_images/{uid}/{filename} {
+      allow get, list: if owner(uid);
+      allow create, update: if owner(uid) && profileImage();
+      allow delete: if owner(uid);
+    }
+    match /{path=**} { allow read, write: if false; }
+  }
+}
