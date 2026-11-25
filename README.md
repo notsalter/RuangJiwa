@@ -2,6 +2,8 @@
 
 This repository now hosts the fully migrated RuangJiwa mobile app, rebuilt with **Expo + React Native**. The legacy Android (Java) project has been removed as part of the migration milestone.
 
+> **Migration in progress:** RuangJiwa is being rewritten as a lightweight installable **web PWA** (Vite + Preact + TypeScript + vite-plugin-pwa) in [`web/`](web/README.md), landing as a series of PRs into `master` — see [MIGRATION.md](MIGRATION.md) and issue #1. The Expo app below stays functional until the final migration PR retires it.
+
 The React Native app delivers consultations, quizzes, journaling, mood tracking, recommendations, and profile management with Firebase as the backend.
 
 ## Getting Started
