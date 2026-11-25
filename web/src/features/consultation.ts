@@ -19,7 +19,7 @@ export function consultationDraft(
   };
 }
 export const canCancel = (status: string) =>
-  status === "pending" || status === "confirmed";
+  status === "pending";
 export const statusLabel = (status: string) =>
   ({
     pending: "Permintaan menunggu. Belum terkonfirmasi.",

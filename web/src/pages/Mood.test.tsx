@@ -3,6 +3,32 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/preact";
 import { MoodPage } from "./Mood";
 import { Session } from "../core/session";
 import type { Backend } from "../core/types";
+
+it.each([2000, 2001])("validates mood note length %i before writing", async (length) => {
+  const create = vi.fn(async () => {});
+  const session = new Session({
+    observe: (cb: Parameters<Backend["observe"]>[0]) => {
+      cb({ uid: "a", email: null });
+      return () => {};
+    },
+    profile: async () => null,
+    list: async () => [],
+    create,
+  } as unknown as Backend);
+  session.start();
+  render(<MoodPage session={session} />);
+  fireEvent.input(screen.getByLabelText("Catatan (opsional)"), {
+    target: { value: "n".repeat(length) },
+  });
+  fireEvent.submit(screen.getByRole("button", { name: "Simpan mood" }).closest("form")!);
+  if (length === 2001) {
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("2.000 karakter"));
+    expect(create).not.toHaveBeenCalled();
+  } else {
+    await waitFor(() => expect(create).toHaveBeenCalledWith("moods", "a", expect.objectContaining({ note: "n".repeat(length) })));
+  }
+  expect(screen.getByLabelText("Catatan (opsional)").getAttribute("maxlength")).toBe("2000");
+});
 it("saves a real mood draft, shows recorded history/chart and creates a calendar download without notifications", async () => {
   const create = vi.fn(async () => {});
   const session = new Session({
