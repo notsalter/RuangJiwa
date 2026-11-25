@@ -1,3 +1,4 @@
+import { assertWritableCollection, createRecord, updateRecord, validRecord } from "./validation";
 import { decodeRecord } from "./records";
 import { emulatorEnabled } from "./emulators";
 import { firebaseConfig, safePhotoUrl } from "../core/config";
@@ -30,22 +31,15 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
   ) => {
     if (auth.currentUser?.uid !== uid) throw new Error("session-changed");
   };
-  const clean = (data: Record<string, unknown>) =>
-    Object.fromEntries(
-      Object.entries(data).filter(
-        ([key, value]) =>
-          value !== undefined && !["id", "userId"].includes(key),
-      ),
-    );
   async function owned(name: string, uid: string, id: string) {
     const c = await client();
     assertOwner(c.auth, uid);
     const ref = c.store.doc(c.db, name, id),
       snap = await c.store.getDoc(ref);
     assertOwner(c.auth, uid);
-    if (!snap.exists() || snap.data().userId !== uid)
+    if (!snap.exists() || snap.data()?.userId !== uid)
       throw new Error("not-owner");
-    return { c, ref };
+    return { c, ref, data: snap.data() };
   }
   return {
     observe(callback, onError) {
@@ -173,13 +167,20 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
     async create(name, uid, data) {
       const c = await client();
       assertOwner(c.auth, uid);
-      const payload = { ...clean(data), userId: uid };
+      const payload = createRecord(name, uid, data);
+      if (name === "consultations") {
+        const psychologist = await c.store.getDoc(
+          c.store.doc(c.db, "psychologists", payload.psychologistId as string),
+        );
+        assertOwner(c.auth, uid);
+        if (!psychologist.exists()) throw new Error("invalid-record-schema");
+      }
       const ref = await c.store.addDoc(c.store.collection(c.db, name), payload);
       assertOwner(c.auth, uid);
       const snap = await c.store.getDoc(ref);
       assertOwner(c.auth, uid);
       if (
-        !snap.exists() ||
+        !snap.exists() || !validRecord(name, snap.data()) ||
         Object.entries(payload).some(
           ([key, value]) =>
             JSON.stringify(snap.data()[key]) !== JSON.stringify(value),
@@ -188,18 +189,27 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
         throw new Error("write-not-verified");
     },
     async update(name, uid, id, data) {
-      const { c, ref } = await owned(name, uid, id);
+      assertWritableCollection(name);
+      const { c, ref, data: current } = await owned(name, uid, id);
+      updateRecord(name, uid, id, data, current);
       assertOwner(c.auth, uid);
-      const payload = clean(data);
+      const payload = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => [
+          key, value === undefined ? c.store.deleteField() : value,
+        ]),
+      );
       await c.store.updateDoc(ref, payload);
       assertOwner(c.auth, uid);
       const snap = await c.store.getDoc(ref);
       assertOwner(c.auth, uid);
       if (
         !snap.exists() ||
-        Object.entries(payload).some(
+        !validRecord(name, snap.data()) || snap.data().userId !== uid ||
+        Object.entries(data).some(
           ([key, value]) =>
-            JSON.stringify(snap.data()[key]) !== JSON.stringify(value),
+            value === undefined
+              ? Object.hasOwn(snap.data(), key)
+              : JSON.stringify(snap.data()[key]) !== JSON.stringify(value),
         )
       )
         throw new Error("write-not-verified");
@@ -209,9 +219,17 @@ export function createBackend(env: Record<string, unknown>): Backend | null {
       assertOwner(c.auth, uid);
       await c.store.deleteDoc(ref);
       assertOwner(c.auth, uid);
-      const snap = await c.store.getDoc(ref);
+      const snap = await c.store.getDocs(
+        c.store.query(
+          c.store.collection(c.db, name),
+          c.store.where("userId", "==", uid),
+          c.store.where(c.store.documentId(), "==", id),
+          // Keep query authorization: a point-only query checks missing resource data.
+          c.store.where(c.store.documentId(), ">=", id),
+        ),
+      );
       assertOwner(c.auth, uid);
-      if (snap.exists()) throw new Error("delete-not-verified");
+      if (snap.docs.length) throw new Error("delete-not-verified");
     },
   };
 }
