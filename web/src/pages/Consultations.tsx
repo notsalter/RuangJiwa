@@ -1,3 +1,4 @@
+import { appHref } from "../core/navigation";
 import { useState } from "preact/hooks";
 import { Session } from "../core/session";
 import { useQuery } from "../core/hooks";
@@ -39,7 +40,7 @@ export function ConsultationsPage({
         Pilih psikolog dari direktori dan ajukan waktu. Permintaan belum menjadi
         janji sampai dikonfirmasi oleh pengelola.
       </p>
-      <a href="/quiz">Isi kuis refleksi</a>
+      <a href={appHref("/quiz")}>Isi kuis refleksi</a>
       <section>
         <h2>Direktori psikolog</h2>
         <QueryFeedback

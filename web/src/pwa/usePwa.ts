@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { isIOS, isInstalled, type InstallPromptEvent } from './install';
 
-export function usePwa() {
+export function usePwa(hasUnsavedChanges = false) {
+  const unsaved = useRef(hasUnsavedChanges);
+  unsaved.current = hasUnsavedChanges;
   const [installed, setInstalled] = useState(false);
   const [ios, setIOS] = useState(false);
   const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
@@ -97,7 +99,7 @@ export function usePwa() {
   }
 
   function update(hasUnsavedChanges: boolean) {
-    if (!waiting || busy || hasUnsavedChanges) return;
+    if (!waiting || busy || hasUnsavedChanges || unsaved.current) return;
     const target = waiting;
     setBusy('update');
     setError('');
@@ -110,7 +112,12 @@ export function usePwa() {
     const changed = () => {
       if (target.state === 'activated') {
         cleanup();
-        if (alive.current) window.location.reload();
+        if (alive.current) {
+          if (unsaved.current) {
+            setBusy(null);
+            setError('Pembaruan siap, tetapi jurnal belum disimpan. Simpan atau batalkan jurnal sebelum memuat ulang.');
+          } else window.location.reload();
+        }
       } else if (target.state === 'redundant') {
         cleanup();
         if (alive.current) {

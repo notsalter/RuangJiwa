@@ -4,7 +4,7 @@ import './pwa.css';
 export type PwaControlsProps = { hasUnsavedChanges: boolean };
 
 export function PwaControls({ hasUnsavedChanges }: PwaControlsProps) {
-  const pwa = usePwa();
+  const pwa = usePwa(hasUnsavedChanges);
   return (
     <aside class="pwa-controls" aria-label="Pemasangan dan pembaruan RuangJiwa">
       <p class="pwa-controls__status" role="status" aria-live="polite">
