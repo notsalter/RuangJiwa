@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { before, after, afterEach, test } from 'node:test';
 import { createRequire } from 'node:module';
+import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -28,7 +29,7 @@ const adminStore = await rules('firebase/firestore');
 const adminStorage = await rules('firebase/storage');
 const origin = 'http://127.0.0.1:4178';
 const config = { projectId, apiKey: 'demo-only-key', authDomain: 'demo-ruangjiwa.firebaseapp.com', storageBucket: 'demo-ruangjiwa.appspot.com', appId: 'demo-only-app' };
-const password = 'Disposable-local-E2E-2026!';
+const password = randomBytes(24).toString('base64url');
 const owners = [{ email: 'owner1-e2e@example.test' }, { email: 'owner2-e2e@example.test' }];
 const records = {}, observations = [], consoleErrors = [], network = [], remoteAttempts = [], sdkApps = [];
 let resetCode;
