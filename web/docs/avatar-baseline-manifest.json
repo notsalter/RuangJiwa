@@ -1,0 +1,14 @@
+{
+  "base": "3422afaac57ed9ab88ee5b78d37b6a2c2b3c15d0",
+  "originalBrowserSourceSHA256": "97e3f2f5e4f91673ac060e4d18b2e1265a1788b1261fc7a86af05a99ea726932",
+  "baselineArtifacts": [
+    {
+      "path": "/root/.hermes/cache/scratch/ruangjiwa-combined-final-e2e.log",
+      "sha256": "1f8b48ba7b36b0a3d35c1910129e92a1d0f1d4a13a2e517794810ccc39156b67"
+    },
+    {
+      "path": "/root/.hermes/cache/scratch/ruangjiwa-e2e-run-nmcz5j/runner.log",
+      "sha256": "97926a24536f7f3ba2ee6a2ed2e4ccff463d97bafea9ef954d0bd9ffa3f1cd7e"
+    }
+  ]
+}

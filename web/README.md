@@ -27,6 +27,18 @@ Profile name editing passes browser persistence tests. Avatar upload/display is 
 
 Mood reminders and confirmed future consultation reminders export `.ics` calendar files. Importing and allowing alerts in the calendar application is the user's responsibility. There is no web push backend or startup notification permission request.
 
+## Avatar delivery decision
+
+The owner explicitly chose to keep lightweight client-only avatar uploads with authenticated rendering and accepted the residual download-token link risk. This is not a strict-private raw-object design, a token-risk remediation, or authorization to deploy rules, rotate tokens, introduce a backend or disable uploads.
+
+New uploads persist only `users/{uid}.profileImagePath` as `profile_images/{uid}/{single-filename}`. Storage is lazy, and authenticated SDK metadata plus bounded `getBlob` reads validate JPEG/PNG/WebP and nonempty size at most 5 MiB. The profile image uses a trusted generated `blob:` URL, separate from the unchanged general URL sanitizer. URLs are revoked on replacement, logout, account switch, offline transition, image decode failure and unmount; stale reads cannot restore a previous view. Private images are not service-worker cache entries.
+
+Name-only saves preserve existing Auth `photoURL` and Firestore legacy URL fields. Reading a legacy link only derives an owned path for the configured Firebase bucket; it never fetches arbitrary third-party URLs. Selecting a new photo is the explicit transition: Auth receives the name and an empty photo URL only when clearing an existing URL, and Firestore deletes `profileImageUrl`/`photoUrl` using `deleteField` while saving the path. No automatic legacy deletion or token revocation occurs. Unrecognized legacy URLs no longer render in the web profile.
+
+Storage, Auth and Firestore are not atomic. Success requires uploaded-byte readback, Auth name/no durable URL, and Firestore path/field-deletion readback. A partial failure is visibly labeled unverified; the selected file remains for retry. Failed attempts can leave orphaned Storage objects and there is no automatic cleanup here.
+
+Authenticated SDK cross-user/guest denials do not stop a holder of a Firebase download token. Local emulator probes still return HTTP 200 and matching image bytes for an unauthenticated token-bearing request. Existing bearer links are not revoked by changing fields. Production bucket CORS for authenticated reads, IAM, deployed rules and token behavior remain unverified and require separate operator review.
+
 ## Boundaries
 
 Private query state is in memory only and is cleared synchronously when the account changes, logout begins or the browser goes offline. Late query/mutation results cannot populate a different account's state. A server write already dispatched before logout cannot be recalled.
