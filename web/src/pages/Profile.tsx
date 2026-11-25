@@ -1,7 +1,8 @@
 import { useEffect, useState } from "preact/hooks";
 import { Session } from "../core/session";
 import { useSession } from "../core/hooks";
-import { safePhotoUrl } from "../core/config";
+import { useAvatar } from "../ui/avatar";
+import { AvatarSaveError } from "../services/avatar";
 import { profileValidation } from "../features/profile";
 import { Field, useAction, ActionFeedback } from "../ui/shared";
 export function ProfilePage({
@@ -17,22 +18,26 @@ export function ProfilePage({
     ),
     [photo, setPhoto] = useState<File>(),
     [validation, setValidation] = useState(""),
+    [partialError, setPartialError] = useState(""),
     action = useAction();
   useEffect(() => {
     setName(state.profile?.name ?? state.user?.displayName ?? "");
   }, [state.profile?.name, state.user?.uid]);
-  const url = safePhotoUrl(
-    state.profile?.photoUrl ?? state.user?.photoURL ?? undefined,
-  );
+  useEffect(() => { setPhoto(undefined); setValidation(""); setPartialError(""); action.clear(); }, [state.user?.uid, !state.profile]);
+  const avatar = useAvatar(session);
   return (
     <>
       <h1>Profil saya</h1>
-      {!state.profile && (
+      {!state.profile && !state.error && (
         <p role="status">Memuat profil. Jika gagal, coba muat ulang.</p>
       )}
-      {url && (
+      {state.error && <p role="alert">{state.error}</p>}
+      {avatar.loading && <p role="status">Memuat foto...</p>}
+      {avatar.error && <div role="alert"><p>{avatar.error}</p><button onClick={avatar.retry}>Coba lagi foto</button></div>}
+      {avatar.url && (
         <img
-          src={url}
+          src={avatar.url}
+          onError={avatar.failed}
           alt="Foto profil saya"
           width="96"
           height="96"
@@ -52,9 +57,15 @@ export function ProfilePage({
           setValidation(message);
           if (message) return;
           void action.run(async () => {
-            const saved = await session.saveProfile(name.trim(), photo);
-            if (saved) setPhoto(undefined);
-            return saved;
+            setPartialError("");
+            try {
+              const saved = await session.saveProfile(name.trim(), photo);
+              if (saved) setPhoto(undefined);
+              return saved;
+            } catch (error) {
+              if (error instanceof AvatarSaveError) { setPartialError(error.message); return false; }
+              throw error;
+            }
           }, "Profil tersimpan.");
         }}
       >
@@ -96,6 +107,7 @@ export function ProfilePage({
           Simpan profil
         </button>
       </form>
+      {partialError && <p role="alert">{partialError}</p>}
       <ActionFeedback action={action} />
       <section>
         <h2>Pemulihan kata sandi</h2>
