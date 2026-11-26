@@ -13,6 +13,6 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite", schema: { user, session, account, verification } }),
   emailAndPassword: { enabled: true },
   session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
-  advanced: { useSecureCookies: process.env.NODE_ENV === "production", cookiePrefix: "ruangjiwa" },
-  rateLimit: { enabled: true, window: 60, max: 10, storage: "memory" },
+  advanced: { useSecureCookies: process.env.NODE_ENV === "production", cookiePrefix: "ruangjiwa", ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] } },
+  rateLimit: { enabled: true, window: 60, max: 100, storage: "memory" },
 });

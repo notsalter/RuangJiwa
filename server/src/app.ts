@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { auth } from "./auth.js";
 import { db } from "./db/client.js";
 import { account, consultations, journals, moods, psychologists, quizHistory, user } from "./db/schema.js";
-import { consultationCreate, consultationUpdate, findOwned, journalCreate, journalUpdate, listRows, moodCreate, profileUpdate, quizCreate, rowJson, saveAvatar, deleteAvatar, validationError, type Collection } from "./validation.js";
+import { consultationCreate, consultationUpdate, findOwned, journalCreate, journalUpdate, listRows, moodCreate, profileUpdate, quizCreate, jsonValue, saveAvatar, deleteAvatar, validationError, type Collection } from "./validation.js";
 
 export type AppEnv = { Variables: { userId: string } };
 const dataDir = process.env.DATA_DIR ?? "./data/avatars";
@@ -33,7 +33,14 @@ async function requireUser(c: any, next: () => Promise<Response | void>) {
 function safeJson(c: any, payload: unknown, status = 200) { return c.json(payload, status); }
 async function body(c: any) { try { return await c.req.json(); } catch { return null; } }
 function bad(c: any, parsed: { success: false; error: any }) { return safeJson(c, validationError(parsed.error), 422); }
-function output(row: Record<string, unknown>) { return rowJson(row); }
+export function output(row: Record<string, unknown>, collection?: Collection) {
+  const clean: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (value === null || key === "updatedAt" || (collection === "consultations" && key === "createdAt")) continue;
+    clean[key] = jsonValue(value);
+  }
+  return clean;
+}
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
@@ -63,11 +70,11 @@ app.get("/api/avatar/:file", requireUser, async (c) => {
   try { const bytes = await readFile(join(dataDir, filename)); const type = filename.endsWith(".jpg") ? "image/jpeg" : filename.endsWith(".png") ? "image/png" : "image/webp"; return new Response(bytes, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff" } }); } catch { return c.json({ error: "not_found" }, 404); }
 });
 
-app.get("/api/psychologists", requireUser, async (c) => c.json((await db.select().from(psychologists)).map(output)));
+app.get("/api/psychologists", requireUser, async (c) => c.json((await db.select().from(psychologists)).map((row) => output(row as Record<string, unknown>))));
 
 for (const collection of privateCollections) {
   const path = collection === "quizHistory" ? "/api/quiz-history" : `/api/${collection}`;
-  app.get(path, requireUser, async (c) => c.json((await listRows(collection, c.get("userId"))).map(output)));
+  app.get(path, requireUser, async (c) => c.json((await listRows(collection, c.get("userId"))).map((row) => output(row as Record<string, unknown>, collection))));
   app.post(path, requireUser, async (c) => {
     const data = await body(c); const parsed = (collection === "journals" ? journalCreate : collection === "moods" ? moodCreate : collection === "quizHistory" ? quizCreate : consultationCreate).safeParse(data);
     if (!parsed.success) return bad(c, parsed);
