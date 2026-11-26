@@ -82,7 +82,7 @@ for (const collection of privateCollections) {
     if (collection === "journals") { value.createdAt = new Date(value.createdAt); value.updatedAt = now; }
     if (collection === "moods" || collection === "quizHistory") { value[collection === "moods" ? "createdAt" : "takenAt"] = new Date(value[collection === "moods" ? "createdAt" : "takenAt"]); }
     if (collection === "consultations") { value.scheduledAt = new Date(value.scheduledAt); value.createdAt = now; value.updatedAt = now; const psychologist = await db.select({ id: psychologists.id }).from(psychologists).where(eq(psychologists.id, value.psychologistId)).limit(1); if (!psychologist[0]) return c.json({ error: "psychologist_not_found" }, 422); }
-    const table: any = { journals, moods, quizHistory, consultations }[collection]; await db.insert(table).values(value); const rows = await db.select().from(table).where(eq(table.id, id)).limit(1); return c.json(output(rows[0] as Record<string, unknown>), 201);
+    const table: any = { journals, moods, quizHistory, consultations }[collection]; await db.insert(table).values(value); const rows = await db.select().from(table).where(eq(table.id, id)).limit(1); return c.json(output(rows[0] as Record<string, unknown>, collection), 201);
   });
 }
 app.patch("/api/journals/:id", requireUser, async (c) => {
