@@ -233,9 +233,9 @@ export function createHttpBackend(env: Record<string, unknown>): Backend | null 
       const owned = ownedAvatarPath(uid, path);
       if (!owned) throw errorWithCode("invalid-photo-path");
       const response = await request<Blob>(`/api/avatar/${pathPart(owned.slice(`profile_images/${uid}/`.length))}`);
-      if (!(response instanceof Blob) || response.size > MAX_AVATAR_BYTES || !validAvatar({ type: response.type, size: response.size }))
+      if (typeof response?.size !== "number" || typeof response?.type !== "string" || typeof response?.arrayBuffer !== "function" || response.size > MAX_AVATAR_BYTES || !validAvatar({ type: response.type, size: response.size }))
         throw errorWithCode("invalid-photo");
-      return response;
+      return response as Blob;
     },
     async saveProfile(uid, name, photo) {
       ensureOwner(uid);
