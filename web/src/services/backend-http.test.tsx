@@ -91,6 +91,12 @@ describe("HTTP backend", () => {
     expect(revoked).toHaveBeenCalledWith("blob:test");
   });
 
+  it("maps an unconfigured password reset endpoint to the stable reset error", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(json({ error: "auth/reset-not-configured" }, { status: 501 }));
+    await expect(createHttpBackend(env)!.resetPassword("u@example.test")).rejects.toMatchObject({ code: "auth/reset-not-configured" });
+    expect(vi.mocked(globalThis.fetch).mock.calls[0][0]).toContain("/api/auth/request-password-reset");
+  });
+
   it("uses HTTP only when explicitly selected with a valid API URL", () => {
     expect(createSelectedBackend(env)).not.toBeNull();
     expect(createSelectedBackend({ VITE_BACKEND: "http" })).toBeNull();

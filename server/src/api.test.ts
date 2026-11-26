@@ -8,6 +8,7 @@ process.env.DB_URL = `file:${join(dir, "test.db")}`;
 process.env.DATA_DIR = join(dir, "avatars");
 process.env.BETTER_AUTH_SECRET = "test-secret-that-is-longer-than-32-characters";
 process.env.WEB_ORIGIN = "http://localhost:5173";
+process.env.TRUSTED_PROXIES = "127.0.0.1";
 const { app } = await import("../src/app.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { db } = await import("../src/db/client.js");
@@ -19,8 +20,9 @@ const iso = (delta = 0) => new Date(Date.now() + delta).toISOString();
 async function request(path: string, init: RequestInit = {}) { return app.fetch(new Request(`http://localhost${path}`, init)); }
 async function json<T>(response: Response): Promise<T> { return response.json() as Promise<T>; }
 function cookie(response: Response) { return response.headers.get("set-cookie")?.split(";")[0] ?? ""; }
+let ipCounter = 10;
 async function signUp(email: string) {
-  const response = await request("/api/auth/sign-up/email", { method: "POST", headers: { ...jsonHeaders, "x-forwarded-for": `198.51.100.${Math.min(email.length, 254)}` }, body: JSON.stringify({ name: email.split("@")[0], email, password: "Password123!" }) });
+  const response = await request("/api/auth/sign-up/email", { method: "POST", headers: { ...jsonHeaders, "x-forwarded-for": `198.51.100.${ipCounter++}` }, body: JSON.stringify({ name: email.split("@")[0], email, password: "Password123!" }) });
   expect(response.status).toBe(200);
   return { cookie: cookie(response), user: (await json<{ user: { id: string } }>(response)).user };
 }
@@ -39,6 +41,12 @@ describe("RuangJiwa self-hosted API", () => {
     const expired = await request("/api/profile", authInit(a.cookie));
     expect(expired.status).toBe(401);
     expect((await json<{ error: string }>(expired)).error).toBe("unauthorized");
+  });
+
+  it("reports reset delivery as an explicit unconfigured capability", async () => {
+    const response = await request("/api/auth/request-password-reset", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ email: "someone@example.test" }) });
+    expect(response.status).toBe(501);
+    expect(await json<{ error: string }>(response)).toEqual({ error: "auth/reset-not-configured" });
   });
 
   it("isolates every collection between users", async () => {

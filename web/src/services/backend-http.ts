@@ -152,7 +152,7 @@ export function createHttpBackend(env: Record<string, unknown>): Backend | null 
         if (status === 429) code = "auth/too-many-requests";
         else if (status === 409 && auth) code = "auth/email-already-in-use";
         else if (status === 422 || status === 400) code = "invalid-record-schema";
-        else if (status === 501 && path === `${AUTH_PATH}/forget-password`) code = "auth/reset-not-configured";
+        else if (status === 501 && path === `${AUTH_PATH}/request-password-reset`) code = "auth/reset-not-configured";
         if (!code) code = apiCode || "request-failed";
         throw errorWithCode(code, typeof bodyObject.message === "string" ? bodyObject.message : code, status);
       }
@@ -222,7 +222,7 @@ export function createHttpBackend(env: Record<string, unknown>): Backend | null 
       notify();
     },
     async resetPassword(email) {
-      await request(`${AUTH_PATH}/forget-password`, { method: "POST", body: { email } });
+      await request(`${AUTH_PATH}/request-password-reset`, { method: "POST", body: { email } });
     },
     async profile(uid) {
       ensureOwner(uid);

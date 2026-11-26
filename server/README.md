@@ -14,6 +14,7 @@ Copy the values into the service environment; do not commit `.env` or secrets.
 | `DATA_DIR` | no | Avatar directory, default `./data/avatars`. Keep it outside the public web root. |
 | `WEB_ORIGIN` | recommended | Exact browser origin, for example `https://app.example.test`; enables credentialed CORS. Never use `*`. |
 | `TRUSTED_ORIGINS` | recommended | Comma-separated Better Auth origins; defaults to `WEB_ORIGIN` or `http://localhost:5173`. |
+| `TRUSTED_PROXIES` | no | Comma-separated proxy IP/CIDR ranges. Forwarded IP headers are ignored unless this is explicitly configured. |
 | `AUTH_URL` | no | Public API origin used by Better Auth, default `http://localhost:3000`. |
 | `PORT` | no | HTTP port, default `3000`. |
 | `NODE_ENV` | no | Set `production` to enable the Secure session-cookie attribute. |

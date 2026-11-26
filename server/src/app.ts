@@ -43,7 +43,15 @@ export function output(row: Record<string, unknown>, collection?: Collection) {
 }
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
-app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
+app.post("/api/auth/request-password-reset", (c) => c.json({ error: "auth/reset-not-configured" }, 501));
+app.all("/api/auth/*", (c) => {
+  const headers = new Headers(c.req.raw.headers);
+  if (!process.env.TRUSTED_PROXIES?.trim()) {
+    headers.delete("x-forwarded-for");
+    headers.delete("x-real-ip");
+  }
+  return auth.handler(new Request(c.req.raw, { headers }));
+});
 
 app.get("/api/profile", requireUser, async (c) => {
   const current = await sessionUser(c); if (!current) return c.json({ error: "unauthorized" }, 401);
