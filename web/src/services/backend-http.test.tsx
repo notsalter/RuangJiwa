@@ -54,7 +54,7 @@ describe("HTTP backend", () => {
   });
 
   it("uploads avatars as multipart and reads them as authenticated blobs", async () => {
-    const blob = new Blob(["image"], { type: "image/png" });
+    const blob = new Uint8Array([137, 80, 78, 71, 0, 0, 0, 0]);
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input);
       if (url.endsWith("/api/profile") && init?.method === "PATCH") return json({ name: "New", email: "u@example.test", avatarPath: "avatar.png" });
