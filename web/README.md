@@ -1,6 +1,6 @@
 # RuangJiwa web
 
-Lightweight Preact application. Run commands from `web/`, not the legacy Expo root.
+Lightweight Preact application. Run every command from `web/`.
 
 ```sh
 npm ci

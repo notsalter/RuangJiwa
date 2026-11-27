@@ -20,6 +20,7 @@ Tracking issue: #1.
 | #18 | self-hosted Hono, Better Auth and Drizzle SQLite API with cookie sessions |
 | #19 | README and migration record rewrite |
 | #20 | removal of unused artifacts, IDE state and the unused `preact-router` dependency |
+| #21 | status record refresh |
 
 Closed without merge and superseded: #9, #10, #11, #12, #13.
 
@@ -42,6 +43,6 @@ Closed without merge and superseded: #9, #10, #11, #12, #13.
 - Client only avatar rendering was selected with the residual download token risk accepted. Production bucket behaviour still needs review.
 - No hosting platform has been enabled. `docs/hosting-options.md` compares GitHub Pages, custom domain Pages, Vercel/Netlify, Cloudflare Pages and generic static hosting.
 - The self-hosted API is not deployed. Host, TLS and email delivery for password reset are undecided, and `TRUSTED_PROXIES` must match the real proxy before any deployment.
-- Expo remains in the repository, so native OS installation and real iOS Safari remain unverified.
+- Real iOS Safari and Android Chrome installation remain unverified. The legacy Expo app was retired and its last revision is tagged `legacy/expo-app`.
 
-Do not enable deployment until these gates are explicitly approved and tested. Do not remove the Expo app until the owner accepts that the web app is the sole client and that the native path will not be resumed.
+Do not enable deployment until these gates are explicitly approved and tested.

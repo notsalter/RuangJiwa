@@ -2,7 +2,7 @@
 
 Tracking issue: [#1](https://github.com/notsalter/RuangJiwa/issues/1).
 
-The replacement app lives in `web/`, with an optional self-hosted API in `server/`. The legacy Expo app is still at the repository root and is not retired. Nothing is deployed.
+The app lives in `web/`, with an optional self-hosted API in `server/`. The legacy Expo app has been retired; its last revision is tagged `legacy/expo-app`. Nothing is deployed.
 
 ## What was built
 
@@ -28,15 +28,17 @@ The replacement app lives in `web/`, with an optional self-hosted API in `server
 | PWA install, updates, history safeguards | [#15](https://github.com/notsalter/RuangJiwa/pull/15) |
 | Authenticated avatar rendering | [#16](https://github.com/notsalter/RuangJiwa/pull/16) |
 | Hosting options and migration status docs | [#17](https://github.com/notsalter/RuangJiwa/pull/17) |
+| Self-hosted Better Auth SQLite API | [#18](https://github.com/notsalter/RuangJiwa/pull/18) |
+| README and migration record rewrite | [#19](https://github.com/notsalter/RuangJiwa/pull/19) |
+| Unused files, IDE state and dead dependency removed | [#20](https://github.com/notsalter/RuangJiwa/pull/20) |
+| Status record refreshed | [#21](https://github.com/notsalter/RuangJiwa/pull/21) |
 
 Closed without merge, kept as evidence: #9, #10, #11, #12, #13 were superseded by the #14 to #16 milestones.
 
-Self-hosted backend: [#18](https://github.com/notsalter/RuangJiwa/pull/18).
-
 ## Current verification
 
-- Web: 214 unit/component tests, 5 dependency tests, 5 PWA policy tests, typecheck, builds at `/` and `/RuangJiwa/`, and an audit with 0 vulnerabilities.
-- Firebase backend: a 14 case real browser suite against local emulators. Mood clearing and journal deletion verify actual stored state. Two avatar cases document the residual risk described below.
+- Web: 222 unit/component tests, 5 dependency tests, 5 PWA policy tests, typecheck, builds at `/` and `/RuangJiwa/`, and an audit with 0 vulnerabilities.
+- Firebase backend: a 14 case real browser suite was run against local emulators while the harness existed; it needed a runner that was never committed, so the suite is not part of the repository. Mood clearing and journal deletion verified actual stored state, and two avatar cases documented the residual risk described below.
 - Proposed Firebase rules: 172 emulator tests. The rules are in the repository, not deployed.
 - Self-hosted backend: 6 server route/auth tests, real `/api/health` and unauthenticated `401` smoke checks, TypeScript build, audit with 0 vulnerabilities. The adapter adds 8 tests on the web side.
 
@@ -54,4 +56,4 @@ Green CI for `web/**` covers typecheck, tests and builds. It does not test produ
 - The historical Google API key alert is still open. Deleting a literal is not revocation.
 - GitGuardian incident 41107195 concerns an old deterministic test fixture. The current test generates a per-run credential.
 - Real device installation (iOS Safari, Android Chrome) is unverified.
-- The legacy Expo app and its dependencies are untouched. Its root audit is not clean.
+- The legacy Expo app is gone from the tree. Restore it from the `legacy/expo-app` tag if the native path is ever resumed.

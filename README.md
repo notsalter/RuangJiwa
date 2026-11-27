@@ -33,7 +33,6 @@ One UI, two interchangeable data backends. Firebase stays the default; the self-
 ```
 web/        The PWA. This is the app you run and deploy.
 server/     Optional self-hosted API (Hono, Better Auth, Drizzle, SQLite).
-src/        Legacy Expo React Native app, kept until the web app replaces it.
 docs/       Migration status, hosting options, security notes.
 ```
 
@@ -90,7 +89,7 @@ Firebase web identifiers are build time values, not secrets. Access control belo
 
 - Not deployed. Hosting, TLS and production email are not configured.
 - GitHub Actions runs typecheck, unit tests, PWA checks and both builds for changes under `web/`.
-- The legacy Expo app still lives at the repository root. It will be removed once the web app is verified on real devices.
+- The legacy Expo app was retired in favour of the PWA. Its last revision is tagged [`legacy/expo-app`](https://github.com/notsalter/RuangJiwa/releases/tag/legacy%2Fexpo-app).
 - Avatar links in the Firebase backend are bearer URLs. That residual risk is documented and accepted for the current design; the self-hosted backend avoids it by serving images through an authenticated route.
 
 ## License
