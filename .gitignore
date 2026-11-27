@@ -7,3 +7,8 @@ web-build
 dist
 .DS_Store
 .env*
+.idea
+.vscode
+*.log
+tsc-output.txt
+coverage

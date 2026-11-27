@@ -19,11 +19,15 @@ Deploying requires email/password Auth, Firestore and Storage, appropriate autho
 
 Optional local emulator integration requires both `VITE_FIREBASE_EMULATORS=true` and `VITE_FIREBASE_PROJECT_ID=demo-ruangjiwa`, plus all normal Firebase identifiers. This exact opt-in connects Auth at `127.0.0.1:9099`, Firestore at `127.0.0.1:8085` and Storage at `127.0.0.1:9199`. It must not be enabled for deployment. No emulator or fake backend is automatically started.
 
+### Self-hosted backend
+
+Set `VITE_BACKEND=http` and `VITE_API_URL` to use the API in `../server` instead of Firebase. Sessions are HTTP only cookies, so no token is stored in the browser. The adapter maps server status codes to stable application errors, including `501 auth/reset-not-configured` until email delivery is configured. See `../server/README.md`.
+
 ## Preserved features
 
 Email login/registration, readonly Auth email and password reset; journal create/read/edit/delete with prompts/moods/tags/favorites/search; mood entry/history and a 14-point chart; both original informal quizzes and quizHistory; Firebase psychologist directory/detail; future consultation requests, history and pending-only cancellation; Home greeting/last mood/next active consultation. Existing collection names and ISO timestamp field names are retained. Strict validation requires a compatibility review for legacy records.
 
-Profile name editing passes browser persistence tests. Avatar upload/display is implemented but **not accepted**: emulator tests expose a partial Storage/Auth save when the Firestore profile write rejects its HTTP URL, and a generated download-token URL returns the image without authentication. Avatar architecture is paused pending an owner decision; do not treat the presence of this UI as a privacy guarantee.
+Profile name editing passes browser persistence tests. Avatar upload and display are implemented; the owner decision and its residual risk are recorded below. The presence of the UI is not a privacy guarantee.
 
 Mood reminders and confirmed future consultation reminders export `.ics` calendar files. Importing and allowing alerts in the calendar application is the user's responsibility. There is no web push backend or startup notification permission request.
 
@@ -46,3 +50,12 @@ Private query state is in memory only and is cleared synchronously when the acco
 Indonesian is the content language. The language selector currently translates navigation only and explicitly labels the limited English scope.
 
 The install prompt and service-worker update policy are maintained separately. Do not infer background reminder support from installation.
+
+## Docs
+
+- [docs/pwa.md](docs/pwa.md) - service worker caching, install and update policy
+- [docs/avatar-authenticated.md](docs/avatar-authenticated.md) - avatar delivery and the accepted token risk
+- [docs/firebase-security.md](docs/firebase-security.md) - proposed owner rules and how to run them
+- [docs/design-decisions.md](docs/design-decisions.md) - visual and interaction decisions
+- [docs/delivery-gate.md](docs/delivery-gate.md) - the implementation gate this release had to pass
+- [docs/test-evidence.md](docs/test-evidence.md) - how each test was driven red then green
