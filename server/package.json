@@ -1,0 +1,30 @@
+{
+  "name": "ruangjiwa-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "migrate": "tsx src/db/migrate.ts",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.11",
+    "@libsql/client": "0.18.0",
+    "better-auth": "1.7.28",
+    "drizzle-orm": "0.45.4",
+    "hono": "4.13.22",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.0",
+    "vitest": "^5.1.2"
+  }
+}

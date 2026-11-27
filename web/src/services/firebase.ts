@@ -3,8 +3,10 @@ import { decodeRecord } from "./records";
 import { emulatorEnabled } from "./emulators";
 import { firebaseConfig } from "../core/config";
 import { ownedAvatarPath, legacyAvatarPath, validAvatar, MAX_AVATAR_BYTES, AvatarSaveError } from "./avatar";
+import { createHttpBackend } from "./backend-http";
 import type { Backend, Collections } from "../core/types";
 export function createBackend(env: Record<string, unknown>): Backend | null {
+  if (env.VITE_BACKEND === "http") return createHttpBackend(env);
   const config = firebaseConfig(env);
   if (!config) return null;
   let pending: ReturnType<typeof connect> | undefined;
