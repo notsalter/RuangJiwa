@@ -1,58 +1,57 @@
-# RuangJiwa: gradual web/PWA migration
+# RuangJiwa: web/PWA migration record
 
 Tracking issue: [#1](https://github.com/notsalter/RuangJiwa/issues/1).
 
-The replacement lives in `web/`. The legacy Expo source remains at the repository root. It has not been retired, and retaining it is not a claim that its dependencies or production deployment are healthy. The migration is **not complete or deployed**.
+The replacement app lives in `web/`, with an optional self-hosted API in `server/`. The legacy Expo app is still at the repository root and is not retired. Nothing is deployed.
 
-## Stack and capability decisions
+## What was built
 
-Vite, Preact and TypeScript; vanilla CSS and system fonts; native History API routing; a small in-memory session/store; lazy Firebase Auth, Firestore Lite and Storage modules. `vite-plugin-pwa` builds a native static-shell service worker. No UI, chart, icon, state-management or query-library dependency was added for the migrated features.
+- Vite, Preact, TypeScript, vanilla CSS and system fonts. No UI, chart, icon, state or query library was added for the migrated features.
+- Native History API routing that works at `/` and under a subpath such as `/RuangJiwa/`.
+- A static-shell service worker: offline app shell only, never private data. Updates ask for consent, and an unsaved journal draft blocks reload.
+- A pluggable `Backend` interface: Firebase (default) or the self-hosted HTTP API (`VITE_BACKEND=http`).
+- Reminders export `.ics` calendar files. There is no push scheduler.
+- Indonesian content. English currently covers navigation labels only.
 
-This is a measured lightweight implementation, not a claim to be the smallest possible stack. The main bundle measurement excludes lazy Firebase chunks. See `web/docs/pwa.md` for build measurements and policy details.
+## Merged history
 
-- Offline means the static application shell, **not private records or durable journal drafts**.
-- Worker updates require consent. Dirty journals block the consenting tab's reload; other tabs do not automatically reload.
-- Reminders export user-requested `.ics` calendar events. There is no backend push scheduler or reliable background timer.
-- Indonesian is the content language; English currently covers navigation only.
-- Existing collection names are retained. Strict schemas reject invalid or incompatible legacy data; compatibility review is still required before rollout.
+| Milestone | PR |
+| --- | --- |
+| Web scaffold, manifest, icons, CI | [#2](https://github.com/notsalter/RuangJiwa/pull/2) |
+| Scoped web dependency remediation | [#3](https://github.com/notsalter/RuangJiwa/pull/3) |
+| Session, auth, five tab shell, Home | [#4](https://github.com/notsalter/RuangJiwa/pull/4) |
+| Mood, journal and calendar export | [#5](https://github.com/notsalter/RuangJiwa/pull/5) |
+| Quizzes, consultations, profile, recommendations | [#6](https://github.com/notsalter/RuangJiwa/pull/6) |
+| Proposed Firebase owner rules and denial tests | [#7](https://github.com/notsalter/RuangJiwa/pull/7) |
+| Adapter validation, mood clearing, verified deletion | [#8](https://github.com/notsalter/RuangJiwa/pull/8) |
+| Form limits and pending only cancellation | [#14](https://github.com/notsalter/RuangJiwa/pull/14) |
+| PWA install, updates, history safeguards | [#15](https://github.com/notsalter/RuangJiwa/pull/15) |
+| Authenticated avatar rendering | [#16](https://github.com/notsalter/RuangJiwa/pull/16) |
+| Hosting options and migration status docs | [#17](https://github.com/notsalter/RuangJiwa/pull/17) |
 
-## GitHub history
+Closed without merge, kept as evidence: #9, #10, #11, #12, #13 were superseded by the #14 to #16 milestones.
 
-Each milestone has focused commits and a PR. Dependent drafts state their predecessor; they must not be used to merge an unapproved predecessor merely because a later repair passes.
+Self-hosted backend: [#18](https://github.com/notsalter/RuangJiwa/pull/18).
 
-| Milestone | GitHub record | Status |
-| --- | --- | --- |
-| Web scaffold, manifest/icons, CI | [#2](https://github.com/notsalter/RuangJiwa/pull/2) | Merged |
-| Scoped web dependency remediation | [#3](https://github.com/notsalter/RuangJiwa/pull/3) | Merged |
-| Session, auth, five-tab shell, Home | [#4](https://github.com/notsalter/RuangJiwa/pull/4) | Open; not merged |
-| Mood history/chart, journal CRUD, calendar export | [#5](https://github.com/notsalter/RuangJiwa/pull/5) | Open; not merged |
-| Quizzes, consultations, profile, recommendations | [#6](https://github.com/notsalter/RuangJiwa/pull/6) | Open; avatar acceptance blocked |
-| Proposed Firebase owner rules and denial tests | [#7](https://github.com/notsalter/RuangJiwa/pull/7) | Merged; rules not deployed |
-| Adapter validation, mood clearing, verified deletion | [#8](https://github.com/notsalter/RuangJiwa/pull/8) | Reviewed draft; stacked on #6 |
-| Form/schema alignment, pending-only cancellation | [#9](https://github.com/notsalter/RuangJiwa/pull/9) | Reviewed draft; stacked on #8 |
-| Real Firebase browser tests and retained failures | [#10](https://github.com/notsalter/RuangJiwa/pull/10) | Reviewed test draft; stacked on #8; security check remains blocked |
-| PWA installation/update controls, root/subpath routing, history safeguards | `web/pwa-final` | Reviewed source prepared as a draft on #9; no merge/deployment approval |
-| Promote replacement and retire Expo | Not opened | Blocked on complete acceptance and owner decisions |
+## Current verification
 
-## Verification, not release approval
+- Web: 214 unit/component tests, 5 dependency tests, 5 PWA policy tests, typecheck, builds at `/` and `/RuangJiwa/`, and an audit with 0 vulnerabilities.
+- Firebase backend: a 14 case real browser suite against local emulators. Mood clearing and journal deletion verify actual stored state. Two avatar cases document the residual risk described below.
+- Proposed Firebase rules: 172 emulator tests. The rules are in the repository, not deployed.
+- Self-hosted backend: 6 server route/auth tests, real `/api/health` and unauthenticated `401` smoke checks, TypeScript build, audit with 0 vulnerabilities. The adapter adds 8 tests on the web side.
 
-The assembled feature/form/PWA source gate passes 198 unit/component tests across 32 files, five dependency compatibility tests, TypeScript and production builds. Five separate PWA policy tests and `/` and `/RuangJiwa/` builds pass. The audited `web/` lockfile reports zero vulnerabilities; the separate legacy root audit is not clean.
+Green CI for `web/**` covers typecheck, tests and builds. It does not test production Firebase, hosting, or real devices.
 
-Independent reviews froze exact source revisions and file hashes. They approved bounded adapter, form and PWA scopes, not blanket merging or production security. Native Chromium exercised draft/history/update safeguards with explicit backend fixtures. That is separate from Firebase persistence testing and native OS installation.
+## Decisions on record
 
-Real Auth/Firestore/Storage browser tests preserve all 14 identities. The untouched original source gives 10 passed/4 failed; repaired source gives **12 passed/2 failed, exit 1**, with no skipped failures. Parent and independent reviewer reran these results. Mood clearing verifies actual field absence, and journal deletion verifies actual absence and removed private views. The remaining failures are:
+- Owner chose client-only avatar rendering with authenticated reads and explicitly accepted the residual download token risk. A token URL stays readable by anyone holding it.
+- Owner chose Better Auth for the self-hosted path. There were no existing users, so no account migration is required.
 
-1. Avatar Storage/Auth writes succeed but the matching Firestore profile write fails for an emulator HTTP URL, leaving partial state.
-2. An unauthenticated request holding the generated avatar download token receives HTTP 200, not the required 403. SDK owner-denial tests do not establish token-link privacy.
+## Open items before any promotion
 
-The proposed Firebase rule suite passes 172 local emulator tests. That does not prove deployed rules, bucket IAM, token privacy, production connectivity or operator policy.
-
-## Decisions required before promotion
-
-- Choose avatar delivery: retain client-only authenticated rendering with explicitly accepted residual token-link risk; add and verify a private backend/bucket path; or temporarily disable new uploads. No choice has been recorded, so avatar architecture changes are paused.
-- Review real Firebase configuration, deployed rules, IAM/CORS, operator privacy policy and strict-schema compatibility. No production credentials have been requested or used for these tests.
-- Resolve the historical Google API key exposure with the owner. Source removal and proposed-rule merges are not revocation.
-- GitGuardian incident 41107195 flags the deterministic local emulator fixture in #10's history. The current test generates a cryptographic per-run password, but the historical finding still requires owner classification. No suppression or history rewrite occurred.
-- Decide deployment and verify HTTPS/routing/manifest on the chosen host. Native OS installation and real iOS Safari remain unverified.
-
-Keep the tracker open and Expo intact until these acceptance criteria are verified. A green source/build workflow does not override the failing browser gate.
+- Hosting and TLS are not chosen, and deployment is not approved.
+- Firebase production configuration, deployed rules, IAM, CORS and privacy policy are unreviewed.
+- The historical Google API key alert is still open. Deleting a literal is not revocation.
+- GitGuardian incident 41107195 concerns an old deterministic test fixture. The current test generates a per-run credential.
+- Real device installation (iOS Safari, Android Chrome) is unverified.
+- The legacy Expo app and its dependencies are untouched. Its root audit is not clean.

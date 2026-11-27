@@ -1,68 +1,98 @@
-# RuangJiwa (React Native)
+# RuangJiwa
 
-This repository now hosts the fully migrated RuangJiwa mobile app, rebuilt with **Expo + React Native**. The legacy Android (Java) project has been removed as part of the migration milestone.
+A private journal, mood tracker and reflection app built as a lightweight, installable web PWA. Mobile first, Indonesian content, small bundle, no tracking.
 
-> **Migration in progress:** RuangJiwa is being rewritten as a lightweight installable **web PWA** (Vite + Preact + TypeScript + vite-plugin-pwa) in [`web/`](web/README.md), landing as a series of PRs into `master` — see [MIGRATION.md](MIGRATION.md) and issue #1. The Expo app below stays functional until the final migration PR retires it.
+Development is ongoing. Nothing is deployed yet, and this repository is the source of truth for what actually works.
 
-The React Native app delivers consultations, quizzes, journaling, mood tracking, recommendations, and profile management with Firebase as the backend.
+## What it does
 
-## Getting Started
+- Email and password sign in
+- Journal entries with prompts, moods, tags, favorites and search
+- Mood check-ins with a 14 day chart
+- Two short reflection quizzes (stress and anxiety) with stored history
+- Psychologist directory and consultation requests
+- Profile editing with an optional avatar
+- Calendar exports (`.ics`) for reminders
+- Install to home screen, offline app shell, and safe update prompts
 
-1. Install the latest **Node.js LTS** and **npm**.
-2. Install dependencies:
-	```bash
-	npm install
-	```
-3. Configure Firebase keys. You can either:
-	- set `EXPO_PUBLIC_*` variables in `app.json`, or
-	- create a `.env` file and load it inside `app.config.ts` (this file is ignored by Git).
-4. Launch the development server:
-	```bash
-	npx expo start
-	```
+## Stack
 
-### Useful Scripts
+| Layer | Choice |
+| --- | --- |
+| UI | Preact + TypeScript + vanilla CSS, system fonts |
+| Build | Vite, `vite-plugin-pwa` (Workbox), static shell only |
+| Routing | Native History API with a small router |
+| Data | Pluggable `Backend` interface |
+| Backend A (default) | Firebase Auth + Firestore Lite + Storage |
+| Backend B | Self-hosted Hono + Better Auth + Drizzle + SQLite (`server/`) |
 
-- `npm start` &rarr; Expo dev server (same as `npx expo start`)
-- `npm run android` / `npm run ios` &rarr; build and run on device or simulator
-- `npm run typecheck` &rarr; TypeScript project validation
-- `npm run lint` &rarr; placeholder (wire up ESLint when ready)
+One UI, two interchangeable data backends. Firebase stays the default; the self-hosted API is opt in through environment variables.
 
-## Project Structure
+## Repository layout
 
 ```
-src/
-  data/                  // static datasets (quizzes, journal prompts, recommendations)
-  hooks/queries/         // React Query hooks per Firestore collection
-  i18n/                  // i18next setup with EN + ID locales
-  models/                // shared TypeScript models
-  navigation/            // stack + tab navigators and route types
-  providers/             // global providers (Auth)
-  screens/               // feature screens (Auth, Consultation, Home, Journal, Mood, Profile)
-  services/              // Firebase init + Firestore/Storage helpers + notifications
-  store/                 // Zustand stores (auth session)
-App.tsx                  // App root providers and navigation container
+web/        The PWA. This is the app you run and deploy.
+server/     Optional self-hosted API (Hono, Better Auth, Drizzle, SQLite).
+src/        Legacy Expo React Native app, kept until the web app replaces it.
+docs/       Migration status, hosting options, security notes.
 ```
 
-## Firebase & Authentication
+## Run it locally
 
-- `src/services/firebase.ts` bootstraps Firebase using the Expo config.
-- `src/services/collections/*` wraps Firestore CRUD logic (consultations, moods, journals, users, etc.).
-- `src/store/auth.ts` + `src/providers/AuthProvider.tsx` keep the signed-in user and profile cached in Zustand.
+```sh
+cd web
+npm ci
+cp .env.example .env      # add your Firebase web identifiers
+npm run dev
+```
 
-Run the Firebase Emulator Suite or point to production credentials depending on your workflow.
+Tests and production build:
 
-## Localization
+```sh
+npm run check             # typecheck + unit/component tests + dependency checks + build
+npm run test:coverage
+```
 
-- i18next is pre-wired with English (`en`) and Indonesian (`id`) strings.
-- Add/modify translations inside `src/i18n/locales/{en,id}/common.json` and reference them via `useTranslation('common')`.
+The build works at `/` or under a subpath, for example `VITE_BASE_PATH=/RuangJiwa/`.
 
-## Testing & Quality
+## Self-hosted backend (optional)
 
-- `npm run typecheck` is available and runs on CI (add ESLint/Jest when ready).
-- See `.github/copilot-migration-plan.md` for the remaining follow-up tasks (tests, CI wiring).
+```sh
+cd server
+npm ci
+export BETTER_AUTH_SECRET="$(openssl rand -base64 32)"
+npm run migrate
+npm run dev
+```
 
-## Notes
+Then set `VITE_BACKEND=http` and `VITE_API_URL` for the web app. See [`server/README.md`](server/README.md) for environment variables, the systemd unit, SQLite backup and Caddy TLS examples.
 
-- The legacy Android directories (`app/`, `gradle/`, etc.) have been deleted.
-- If you opened the project before this migration, clear old IDE caches and reopen the folder as a pure React Native workspace.
+Notes:
+
+- Sessions are HTTP only cookies. No tokens are stored in the browser.
+- Avatars are served only to their owner through an authenticated route.
+- Password reset needs SMTP. Until it is configured the API answers with an explicit `501 auth/reset-not-configured` rather than pretending the mail was sent.
+
+## Configuration
+
+Firebase web identifiers are build time values, not secrets. Access control belongs in Firestore and Storage rules. Never commit real environment files.
+
+## Docs
+
+- [MIGRATION.md](MIGRATION.md) - how the rewrite was delivered
+- [docs/migration-status.md](docs/migration-status.md) - current state and open items
+- [docs/hosting-options.md](docs/hosting-options.md) - deployment options and requirements
+- [web/README.md](web/README.md) - app details, features and limits
+- [web/docs/pwa.md](web/docs/pwa.md) - service worker, install and update policy
+- [web/docs/avatar-authenticated.md](web/docs/avatar-authenticated.md) - avatar delivery and its residual risk
+
+## Status and known limits
+
+- Not deployed. Hosting, TLS and production email are not configured.
+- GitHub Actions runs typecheck, unit tests, PWA checks and both builds for changes under `web/`.
+- The legacy Expo app still lives at the repository root. It will be removed once the web app is verified on real devices.
+- Avatar links in the Firebase backend are bearer URLs. That residual risk is documented and accepted for the current design; the self-hosted backend avoids it by serving images through an authenticated route.
+
+## License
+
+No license file is included. All rights reserved unless the owner states otherwise.
