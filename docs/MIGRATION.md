@@ -43,7 +43,8 @@ Closed without merge and superseded by the #14 to #16 milestones: #9, #10, #11, 
 - Web: 222 unit and component tests, 5 dependency tests, 5 PWA policy tests, typecheck, builds at `/` and `/RuangJiwa/`, audit with 0 vulnerabilities.
 - Firebase backend: a 14 case real browser suite was run against local emulators while the harness existed; it needed a runner that was never committed, so the suite is not part of the repository. Mood clearing and journal deletion verified actual stored state, and two avatar cases documented the residual risk in [AVATARS.md](AVATARS.md).
 - Proposed Firebase rules: 172 emulator tests, recorded in [FIREBASE_RULES.md](FIREBASE_RULES.md). The rules are in the repository, not deployed.
-- Self-hosted backend: 6 server route and auth tests, real `/api/health` and unauthenticated `401` smoke checks, TypeScript build, audit with 0 vulnerabilities. The adapter adds 8 tests on the web side.
+- Self-hosted backend: 6 server route and auth tests, real `/api/health` and unauthenticated `401` smoke checks, TypeScript build, audit with 0 vulnerabilities. The adapter adds 11 tests on the web side.
+- Self-hosted backend end to end: a browser signed in against the real API on loopback and read its own seven moods, three journals and one quiz result, which rendered on Home, Mood and Journal. That run found two adapter defects that the mocked tests could not see, both fixed in #26. The screenshots in the [README](../README.md) come from that session.
 
 CI for `web/**` covers typecheck, tests and builds. It does not test production Firebase, hosting, or real devices, and `server/**` has no CI trigger yet.
 

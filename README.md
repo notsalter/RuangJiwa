@@ -8,6 +8,14 @@
 
 **[Documentation](docs/README.md)** · [Setup and deployment](docs/SETUP.md) · [Migration record](docs/MIGRATION.md)
 
+![The RuangJiwa journal history on a phone, showing three saved entries](docs/assets/journal.png)
+
+*Local build against the self-hosted API, with test entries written for the screenshot.*
+
+| Home | Mood history |
+| --- | --- |
+| ![The RuangJiwa home screen greeting the signed-in user](docs/assets/home.png) | ![Mood history with a chart of the last entries](docs/assets/mood.png) |
+
 ## What it does
 
 - **Sign in** with email and password, with a readonly account email and password reset.
