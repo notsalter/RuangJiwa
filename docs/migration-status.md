@@ -21,6 +21,8 @@ Tracking issue: #1.
 | #19 | README and migration record rewrite |
 | #20 | removal of unused artifacts, IDE state and the unused `preact-router` dependency |
 | #21 | status record refresh |
+| #22 | legacy Expo app retired, its last revision tagged `legacy/expo-app` |
+| #23 | dead exports dropped and stale doc links repaired |
 
 Closed without merge and superseded: #9, #10, #11, #12, #13.
 
