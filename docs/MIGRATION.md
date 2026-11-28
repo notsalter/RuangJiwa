@@ -35,6 +35,9 @@ The app lives in `web/`, with an optional self-hosted API in `server/`. The lega
 | Legacy Expo app retired (tagged `legacy/expo-app`) | [#22](https://github.com/notsalter/RuangJiwa/pull/22) |
 | Dead exports dropped, stale doc links repaired | [#23](https://github.com/notsalter/RuangJiwa/pull/23) |
 | Cleanup milestones recorded | [#24](https://github.com/notsalter/RuangJiwa/pull/24) |
+| Documentation consolidated into `docs/`, LICENSE and repository policy added | [#25](https://github.com/notsalter/RuangJiwa/pull/25) |
+| Self-hosted adapter session and record reads fixed | [#26](https://github.com/notsalter/RuangJiwa/pull/26) |
+| Real app screenshots added | [#27](https://github.com/notsalter/RuangJiwa/pull/27) |
 
 Closed without merge and superseded by the #14 to #16 milestones: #9, #10, #11, #12, #13.
 
