@@ -38,6 +38,7 @@ The app lives in `web/`, with an optional self-hosted API in `server/`. The lega
 | Documentation consolidated into `docs/`, LICENSE and repository policy added | [#25](https://github.com/notsalter/RuangJiwa/pull/25) |
 | Self-hosted adapter session and record reads fixed | [#26](https://github.com/notsalter/RuangJiwa/pull/26) |
 | Real app screenshots added | [#27](https://github.com/notsalter/RuangJiwa/pull/27) |
+| Visual pass: design tokens, icons, card surfaces, desktop navigation | [#29](https://github.com/notsalter/RuangJiwa/pull/29) |
 
 Closed without merge and superseded by the #14 to #16 milestones: #9, #10, #11, #12, #13.
 
@@ -48,6 +49,8 @@ Closed without merge and superseded by the #14 to #16 milestones: #9, #10, #11, 
 - Proposed Firebase rules: 172 emulator tests, recorded in [FIREBASE_RULES.md](FIREBASE_RULES.md). The rules are in the repository, not deployed.
 - Self-hosted backend: 6 server route and auth tests, real `/api/health` and unauthenticated `401` smoke checks, TypeScript build, audit with 0 vulnerabilities. The adapter adds 11 tests on the web side.
 - Self-hosted backend end to end: a browser signed in against the real API on loopback and read its own seven moods, three journals and one quiz result, which rendered on Home, Mood and Journal. That run found two adapter defects that the mocked tests could not see, both fixed in #26. The screenshots in the [README](../README.md) come from that session.
+
+- Visual pass: the owner judged the first release plainer than the Android app it replaced, so the interface was rebuilt on a token layer with soft elevation, a hand-built icon set, a top navigation bar from 900px, and labelled chart axes. The restraint rules that forbade decoration were relaxed deliberately and recorded in [DESIGN.md](DESIGN.md). Verified at 390px and 1280px with no horizontal overflow, and the 224 web tests pass unchanged.
 
 CI for `web/**` covers typecheck, tests and builds. It does not test production Firebase, hosting, or real devices, and `server/**` has no CI trigger yet.
 

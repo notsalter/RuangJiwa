@@ -1,4 +1,5 @@
 import { usePwa } from './usePwa';
+import { InstallIcon } from '../ui/icons';
 import './pwa.css';
 
 export type PwaControlsProps = { hasUnsavedChanges: boolean };
@@ -8,8 +9,11 @@ export function PwaControls({ hasUnsavedChanges }: PwaControlsProps) {
   return (
     <aside class="pwa-controls" aria-label="Pemasangan dan pembaruan RuangJiwa">
       <p class="pwa-controls__status" role="status" aria-live="polite">
-        {pwa.installed ? 'RuangJiwa dibuka sebagai aplikasi.' : 'RuangJiwa dapat digunakan di browser.'}
-        {pwa.offlineReady && ' Tampilan aplikasi tersedia offline. Masuk akun dan sinkronisasi tetap memerlukan internet.'}
+        <InstallIcon />
+        <span>
+          {pwa.installed ? 'RuangJiwa dibuka sebagai aplikasi.' : 'RuangJiwa dapat digunakan di browser.'}
+          {pwa.offlineReady && ' Tampilan aplikasi tersedia offline. Masuk akun dan sinkronisasi tetap memerlukan internet.'}
+        </span>
       </p>
       {!pwa.installed && pwa.ios ? (
         <p>Untuk memasang di iPhone atau iPad, buka halaman ini di Safari, pilih Bagikan, lalu Tambahkan ke Layar Utama. Jika pilihan itu tidak terlihat, periksa menu browser. Tidak ada tombol pemasangan otomatis di sini.</p>

@@ -109,7 +109,7 @@ export function ProfilePage({
       </form>
       {partialError && <p role="alert">{partialError}</p>}
       <ActionFeedback action={action} />
-      <section>
+      <section class="card section">
         <h2>Pemulihan kata sandi</h2>
         <button
           disabled={!state.user?.email || action.busy}
@@ -123,7 +123,7 @@ export function ProfilePage({
           Kirim pemulihan kata sandi
         </button>
       </section>
-      <section>
+      <section class="card section">
         <h2>Privasi dan penggunaan</h2>
         <p>
           Catatan pribadi memerlukan koneksi internet dan tidak tersedia

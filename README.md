@@ -16,6 +16,10 @@
 | --- | --- |
 | ![The RuangJiwa home screen greeting the signed-in user](docs/assets/home.png) | ![Mood history with a chart of the last entries](docs/assets/mood.png) |
 
+On a tablet or desktop the tab bar moves to the top and the reading column widens:
+
+![The RuangJiwa home screen on a desktop browser](docs/assets/desktop.png)
+
 ## What it does
 
 - **Sign in** with email and password, with a readonly account email and password reset.
