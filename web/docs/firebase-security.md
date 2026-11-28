@@ -15,7 +15,7 @@ The suite refuses non-`demo-*` projects and missing/non-loopback Firestore/Stora
 
 ## Schema evidence and proposed policy
 
-Repository evidence: [`src/models/types.ts`](../../src/models/types.ts), [`src/services/collections/`](../../src/services/collections/), [`src/data/quizzes.ts`](../../src/data/quizzes.ts), [`JournalEntryNew.tsx`](../../src/screens/Journal/JournalEntryNew.tsx), and [`ConsultationBooking.tsx`](../../src/screens/Consultation/ConsultationBooking.tsx). These describe the legacy client, not observed production data. `id` is populated from document paths by collection services and is **not** an allowed stored field. The owner field is exactly `userId`, not `ownerId`.
+Repository evidence: [`core/types.ts`](../src/core/types.ts), [`services/records.ts`](../src/services/records.ts), [`features/quiz.ts`](../src/features/quiz.ts), [`pages/Journal.tsx`](../src/pages/Journal.tsx), and [`pages/Consultations.tsx`](../src/pages/Consultations.tsx). The legacy Expo files these replaced were removed in #22 and remain available at the `legacy/expo-app` tag. `id` is populated from document paths by the record services and is **not** an allowed stored field. The owner field is exactly `userId`, not `ownerId`.
 
 | Collection | Proposed read/list | Proposed client writes |
 | --- | --- | --- |

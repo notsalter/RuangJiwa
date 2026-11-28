@@ -8,7 +8,7 @@ import { db } from "./db/client.js";
 import { account, consultations, journals, moods, psychologists, quizHistory, user } from "./db/schema.js";
 import { consultationCreate, consultationUpdate, findOwned, journalCreate, journalUpdate, listRows, moodCreate, profileUpdate, quizCreate, jsonValue, saveAvatar, deleteAvatar, validationError, type Collection } from "./validation.js";
 
-export type AppEnv = { Variables: { userId: string } };
+type AppEnv = { Variables: { userId: string } };
 const dataDir = process.env.DATA_DIR ?? "./data/avatars";
 const app = new Hono<AppEnv>();
 const privateCollections: Collection[] = ["journals", "moods", "quizHistory", "consultations"];
@@ -33,7 +33,7 @@ async function requireUser(c: any, next: () => Promise<Response | void>) {
 function safeJson(c: any, payload: unknown, status = 200) { return c.json(payload, status); }
 async function body(c: any) { try { return await c.req.json(); } catch { return null; } }
 function bad(c: any, parsed: { success: false; error: any }) { return safeJson(c, validationError(parsed.error), 422); }
-export function output(row: Record<string, unknown>, collection?: Collection) {
+function output(row: Record<string, unknown>, collection?: Collection) {
   const clean: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
     if (value === null || key === "updatedAt" || (collection === "consultations" && key === "createdAt")) continue;

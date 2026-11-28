@@ -6,7 +6,7 @@ import { z } from "zod";
 import { db } from "./db/client.js";
 import { account, consultations, journals, moods, psychologists, quizHistory, user } from "./db/schema.js";
 
-export const moodValues = ["very_sad", "sad", "neutral", "happy", "very_happy"] as const;
+const moodValues = ["very_sad", "sad", "neutral", "happy", "very_happy"] as const;
 const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/).refine((v) => { const date = new Date(v); return Number.isFinite(date.getTime()) && date.toISOString() === v; }, "invalid ISO timestamp");
 const identifier = z.string().min(1).max(128).refine((v) => !v.includes("/"));
 const mood = z.enum(moodValues);
@@ -21,13 +21,12 @@ export const consultationUpdate = z.object({ ...base, status: z.literal("cancele
 export const profileUpdate = z.object({ name: z.string().trim().min(1).max(100) }).strict();
 
 export type Collection = "journals" | "moods" | "quizHistory" | "consultations";
-export const tableFor = { journals, moods, quizHistory, consultations } as const;
+const tableFor = { journals, moods, quizHistory, consultations } as const;
 export function validationError(error: z.ZodError) { return { error: "validation_error", details: error.flatten().fieldErrors }; }
 export function jsonValue(value: unknown): unknown { return value instanceof Date ? value.toISOString() : value; }
-export function rowJson(row: Record<string, unknown>): Record<string, unknown> { const out: Record<string, unknown> = {}; for (const [k, v] of Object.entries(row)) out[k] = jsonValue(v); return out; }
 export async function listRows(collection: Collection, userId: string) { const table = tableFor[collection]; return db.select().from(table).where(eq(table.userId, userId)); }
 export async function findOwned(collection: Collection, userId: string, id: string) { const table = tableFor[collection]; const rows = await db.select().from(table).where(and(eq(table.id, id), eq(table.userId, userId))).limit(1); return rows[0]; }
-export async function ensureAvatarDir(dataDir: string) { await mkdir(dataDir, { recursive: true }); }
+async function ensureAvatarDir(dataDir: string) { await mkdir(dataDir, { recursive: true }); }
 export async function saveAvatar(dataDir: string, userId: string, file: File): Promise<{ path: string; bytes: Uint8Array; type: string }> {
   if (file.size < 1 || file.size > 5 * 1024 * 1024) throw new Error("avatar_size");
   const bytes = new Uint8Array(await file.arrayBuffer());

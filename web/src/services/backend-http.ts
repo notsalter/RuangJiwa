@@ -1,7 +1,6 @@
 import { AvatarSaveError, MAX_AVATAR_BYTES, validAvatar, ownedAvatarPath } from "./avatar";
 import { decodeRecord } from "./records";
 import { createRecord, updateRecord } from "./validation";
-import { safeError } from "../core/config";
 import type {
   Backend,
   Collection,
@@ -302,8 +301,4 @@ export function createHttpBackend(env: Record<string, unknown>): Backend | null 
 
 export function createBackend(env: Record<string, unknown>): Backend | null {
   return createHttpBackend(env);
-}
-
-export function httpErrorMessage(error: unknown): string {
-  return safeError(error);
 }
