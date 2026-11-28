@@ -44,6 +44,18 @@ describe("HTTP backend", () => {
     stop();
   });
 
+  it("treats an empty Better Auth session body as signed out", async () => {
+    const callbacks: Array<User | null> = [];
+    const errors: unknown[] = [];
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(json(null));
+    const backend = createHttpBackend(env)!;
+    const stop = backend.observe((user) => callbacks.push(user), (error) => errors.push(error));
+    await vi.waitFor(() => expect(callbacks).toHaveLength(1));
+    expect(callbacks[0]).toBeNull();
+    expect(errors).toEqual([]);
+    stop();
+  });
+
   it("maps validation failures to the existing record error code", async () => {
     const validMood = {
       mood: "happy",
@@ -89,6 +101,28 @@ describe("HTTP backend", () => {
     await waitFor(() => expect(created).toHaveBeenCalled());
     view.unmount();
     expect(revoked).toHaveBeenCalledWith("blob:test");
+  });
+
+  it("reads records shaped exactly like the self-hosted API response", async () => {
+    const row = {
+      id: "d081448f-ea04-4f64-9022-b998dfa48056",
+      userId: "Z81TUUgafWgt0KWSmmiWBDy19M3YGUG4",
+      mood: "very_happy",
+      note: "Hari yang tenang, syukurlah.",
+      createdAt: "2026-11-28T09:15:00.000Z",
+    };
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith("/api/moods")) return json([row]);
+      return json({ session: { id: "s1" }, user: { id: row.userId, email: "u@example.test", name: "U" } });
+    });
+    const backend = createHttpBackend(env)!;
+    const stop = backend.observe(() => {}, () => {});
+    await vi.waitFor(() => expect(vi.mocked(globalThis.fetch).mock.calls.length).toBeGreaterThan(0));
+    const items = await backend.list("moods", row.userId);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ id: row.id, userId: row.userId, mood: "very_happy" });
+    stop();
   });
 
   it("maps an unconfigured password reset endpoint to the stable reset error", async () => {
