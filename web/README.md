@@ -53,9 +53,10 @@ The install prompt and service-worker update policy are maintained separately. D
 
 ## Docs
 
-- [docs/pwa.md](docs/pwa.md) - service worker caching, install and update policy
-- [docs/avatar-authenticated.md](docs/avatar-authenticated.md) - avatar delivery and the accepted token risk
-- [docs/firebase-security.md](docs/firebase-security.md) - proposed owner rules and how to run them
-- [docs/design-decisions.md](docs/design-decisions.md) - visual and interaction decisions
-- [docs/delivery-gate.md](docs/delivery-gate.md) - the implementation gate this release had to pass
-- [docs/test-evidence.md](docs/test-evidence.md) - how each test was driven red then green
+- [Setup and deployment](../docs/SETUP.md) - commands, environment variables, hosting
+- [PWA](../docs/PWA.md) - service worker caching, install and update policy
+- [Avatars](../docs/AVATARS.md) - avatar delivery and the accepted token risk
+- [Firebase rules](../docs/FIREBASE_RULES.md) - proposed owner rules and how to run them
+- [Design](../docs/DESIGN.md) - visual and interaction decisions
+- [Testing](../docs/TESTING.md) and [test evidence](../docs/TEST_EVIDENCE.md) - the gate and how each test was driven red then green
+- [Documentation index](../docs/README.md) - every document in the repository

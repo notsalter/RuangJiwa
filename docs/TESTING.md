@@ -46,7 +46,7 @@ Scope: implementation and local UI. Production connectivity, deployment rules an
 - Whitespace PASS: form fields are grouped; history and reflection sections have larger separation.
 - Accent PASS: indigo primary action and selected tab, neutral secondary controls.
 - Identity PASS: RuangJiwa indigo, mood vocabulary, reflection prompts and persistent original five tabs retained.
-- Design Read PASS: recorded in design-decisions.md and before first edit.
+- Design Read PASS: recorded in [DESIGN.md](DESIGN.md) before the first edit.
 - C-1 through C-5 PASS: written intent, exercised controls, content-specific composition, responsive states, no fabricated claims.
 - R-05 PASS: form/list reading layout, not landing/dashboard template.
 - R-11 PASS: 6px controls, 12px focal region, no universal pills.
@@ -56,7 +56,7 @@ Scope: implementation and local UI. Production connectivity, deployment rules an
 - R-21 PASS: approved original light reading environment retained; no dark-default invention.
 - R-29 PASS: indigo plus neutrals and functional error text.
 - R-30 PASS: no external product cloned.
-- R-31 PASS: major decisions recorded in design-decisions.md.
+- R-31 PASS: major decisions recorded in [DESIGN.md](DESIGN.md).
 
 ## Recorded click-through
 
