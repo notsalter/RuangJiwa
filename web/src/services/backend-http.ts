@@ -47,6 +47,7 @@ function asObject(value: unknown): Record<string, unknown> {
 }
 
 function sessionUser(payload: unknown): User | null {
+  if (payload === null || payload === undefined) return null;
   const root = asObject(payload) as SessionResponse;
   const source = root.user;
   if (!source) return null;
@@ -268,7 +269,8 @@ export function createHttpBackend(env: Record<string, unknown>): Backend | null 
       return items.map((item) => {
         const value = asObject(item);
         const id = typeof value.id === "string" ? value.id : "";
-        const decoded = decodeRecord(name, id, value);
+        const { id: _storedId, ...data } = value;
+        const decoded = decodeRecord(name, id, data);
         if (!decoded) throw errorWithCode("invalid-record-schema");
         return decoded;
       }) as Collections[typeof name][];
