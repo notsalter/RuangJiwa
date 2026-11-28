@@ -41,7 +41,7 @@ export function ConsultationsPage({
         janji sampai dikonfirmasi oleh pengelola.
       </p>
       <a href={appHref("/quiz")}>Isi kuis refleksi</a>
-      <section>
+      <section class="section card">
         <h2>Direktori psikolog</h2>
         <QueryFeedback
           query={directory}
@@ -67,7 +67,7 @@ export function ConsultationsPage({
         ))}
       </section>
       {person && (
-        <section aria-label="Detail psikolog">
+        <section class="card section" aria-label="Detail psikolog">
           <h2>{person.name}</h2>
           {safePhotoUrl(person.photoUrl) && (
             <img
@@ -149,7 +149,7 @@ export function ConsultationsPage({
         </section>
       )}
       <ActionFeedback action={action} />
-      <section>
+      <section class="section card">
         <h2>Permintaan dan jadwal saya</h2>
         <QueryFeedback
           query={query}

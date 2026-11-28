@@ -70,7 +70,12 @@ export function JournalPage({
   return (
     <>
       <h1>{editing ? "Edit jurnal" : "Tulis jurnal"}</h1>
+      <p class="card__hint">
+        Tulis apa yang sedang kamu pikirkan. Hanya kamu yang dapat membacanya.
+      </p>
+      <div class="grid grid--split">
       <form
+        class="card"
         onSubmit={(e) => {
           e.preventDefault();
           const error = journalFormError(draft);
@@ -119,18 +124,26 @@ export function JournalPage({
             ))}
           </select>
         </Field>
-        <button
-          type="button"
-          onClick={() =>
-            change(
-              "prompt",
-              journalPrompts[Math.floor(Math.random() * journalPrompts.length)],
-            )
-          }
-        >
-          Pilih prompt acak
-        </button>
-        {draft.prompt && <p>{draft.prompt}</p>}
+        <div class="actions">
+          <button
+            type="button"
+            class="quiet"
+            onClick={() =>
+              change(
+                "prompt",
+                journalPrompts[Math.floor(Math.random() * journalPrompts.length)],
+              )
+            }
+          >
+            Pilih prompt acak
+          </button>
+        </div>
+        {draft.prompt && (
+          <div class="prompt-card">
+            <span class="badge">Prompt refleksi</span>
+            <p>{draft.prompt}</p>
+          </div>
+        )}
         <Field label="Isi jurnal">
           <textarea
             required
@@ -160,7 +173,7 @@ export function JournalPage({
             onInput={(e) => change("tags", e.currentTarget.value)}
           />
         </Field>
-        <p>Maksimal 10 tag, masing-masing 40 karakter.</p>
+        <p class="card__hint">Maksimal 10 tag, masing-masing 40 karakter.</p>
         <label class="choice">
           <input
             type="checkbox"
@@ -190,9 +203,10 @@ export function JournalPage({
           )}
         </div>
       </form>
+      <div class="stack">
       <ActionFeedback action={action} />
       {entry && (
-        <section aria-label="Detail jurnal">
+        <section class="card section" aria-label="Detail jurnal">
           <h2>{entry.title || "Jurnal tanpa judul"}</h2>
           {entry.prompt && <p>{entry.prompt}</p>}
           <p style={{ whiteSpace: "pre-wrap" }}>{entry.content}</p>
@@ -277,23 +291,25 @@ export function JournalPage({
           )}
         </section>
       )}
-      <section>
+      <section class="card section">
         <h2>Riwayat jurnal</h2>
-        <Field label="Cari jurnal">
-          <input
-            type="search"
-            value={search}
-            onInput={(e) => setSearch(e.currentTarget.value)}
-          />
-        </Field>
-        <label class="choice">
-          <input
-            type="checkbox"
-            checked={favorites}
-            onChange={(e) => setFavorites(e.currentTarget.checked)}
-          />
-          Hanya favorit
-        </label>
+        <div class="toolbar">
+          <Field label="Cari jurnal">
+            <input
+              type="search"
+              value={search}
+              onInput={(e) => setSearch(e.currentTarget.value)}
+            />
+          </Field>
+          <label class="choice">
+            <input
+              type="checkbox"
+              checked={favorites}
+              onChange={(e) => setFavorites(e.currentTarget.checked)}
+            />
+            Hanya favorit
+          </label>
+        </div>
         <QueryFeedback
           query={query}
           retry={() => void session.load("journals")}
@@ -303,9 +319,14 @@ export function JournalPage({
           <p>Tidak ada jurnal yang cocok dengan pencarian atau filter.</p>
         )}
         {visible.map((item) => (
-          <article key={item.id}>
+          <article class="journal-entry" key={item.id}>
             <h3>{item.title || "Jurnal tanpa judul"}</h3>
-            <p>
+            <p class="journal-entry__meta">
+              {item.mood && (
+                <span aria-hidden="true">
+                  {moodOptions.find((m) => m.value === item.mood)?.emoji}
+                </span>
+              )}
               {dateLabel(item.createdAt)}
               {item.isFavorite ? " · Favorit" : ""}
             </p>
@@ -320,6 +341,8 @@ export function JournalPage({
           </article>
         ))}
       </section>
+      </div>
+      </div>
     </>
   );
 }

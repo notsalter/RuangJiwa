@@ -37,7 +37,7 @@ export function QuizPage({
       </p>
       {!quiz &&
         quizzes.map((q) => (
-          <section key={q.id}>
+          <section class="card section" key={q.id}>
             <h2>{q.title}</h2>
             <p>{q.description}</p>
             <button
@@ -54,7 +54,7 @@ export function QuizPage({
           </section>
         ))}
       {quiz && (
-        <section>
+        <section class="card section">
           <h2>{quiz.title}</h2>
           <form
             onSubmit={(e) => {
@@ -120,7 +120,7 @@ export function QuizPage({
             </div>
           </form>
           {result && (
-            <section aria-label="Hasil kuis">
+            <section class="card section" aria-label="Hasil kuis">
               <h3>
                 {quizCategories[result.category].title}: {result.score} / 15
               </h3>
@@ -131,7 +131,7 @@ export function QuizPage({
         </section>
       )}
       <ActionFeedback action={action} />
-      <section>
+      <section class="card section">
         <h2>Riwayat kuis</h2>
         <QueryFeedback
           query={query}

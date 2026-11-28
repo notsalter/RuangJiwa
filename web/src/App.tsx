@@ -12,6 +12,15 @@ import { QuizPage } from "./pages/Quiz";
 import { ConsultationsPage } from "./pages/Consultations";
 import { ProfilePage } from "./pages/Profile";
 import { PwaControls } from "./pwa/PwaControls";
+import {
+  ConsultationIcon,
+  HomeIcon,
+  JournalIcon,
+  LeafIcon,
+  LogoutIcon,
+  MoodIcon,
+  ProfileIcon,
+} from "./ui/icons";
 const defaultSession = new Session(createBackend(import.meta.env));
 const historyKey = "__ruangjiwa_history";
 function entry(state: unknown): { id: string; index: number } | null {
@@ -185,26 +194,36 @@ export function App({ session = defaultSession }: { session?: Session }) {
         Langsung ke isi
       </a>
       <header>
-        <span class="brand">RuangJiwa</span>
+        <span class="brand">
+          <LeafIcon />
+          RuangJiwa
+        </span>
         <div class="actions">
-          <label>
-            Bahasa{" "}
+          <label class="lang">
+            <span class="lang__label">Bahasa</span>
             <select
+              aria-label="Bahasa"
               value={locale}
               onChange={(e) => setLocale(e.currentTarget.value)}
             >
-              <option value="id">Indonesia</option>
+              <option value="id">Bahasa Indonesia</option>
               <option value="en">English (navigation)</option>
             </select>
           </label>
           {state.user && (
             <button
+              class="icon-btn"
+              aria-label="Keluar"
+              title="Keluar"
               onClick={() => {
                 if (!journalDirty || window.confirm(discardMessage))
                   void session.logout();
               }}
             >
-              Keluar
+              <LogoutIcon />
+              <span class="icon-btn__text" aria-hidden="true">
+                Keluar
+              </span>
             </button>
           )}
         </div>
@@ -263,18 +282,21 @@ export function App({ session = defaultSession }: { session?: Session }) {
             href={appHref("/")}
             aria-current={path === "/" ? "page" : undefined}
           >
+            <HomeIcon />
             {translate("home", locale)}
           </a>
           <a
             href={appHref("/mood")}
             aria-current={path === "/mood" ? "page" : undefined}
           >
+            <MoodIcon />
             {translate("mood", locale)}
           </a>
           <a
             href={appHref("/journal")}
             aria-current={path === "/journal" ? "page" : undefined}
           >
+            <JournalIcon />
             {translate("journal", locale)}
           </a>
           <a
@@ -285,12 +307,14 @@ export function App({ session = defaultSession }: { session?: Session }) {
                 : undefined
             }
           >
+            <ConsultationIcon />
             {translate("consultation", locale)}
           </a>
           <a
             href={appHref("/profile")}
             aria-current={path === "/profile" ? "page" : undefined}
           >
+            <ProfileIcon />
             {translate("profile", locale)}
           </a>
         </nav>
